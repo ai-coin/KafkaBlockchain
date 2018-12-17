@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>com.ai-blockchain</groupId>
+    <artifactId>KafkaBlockchain</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>10</maven.compiler.source>
+        <maven.compiler.target>10</maven.compiler.target>
+    </properties>
+    
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.12</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka-log4j-appender -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-log4j-appender</artifactId>
+            <version>0.11.0.0</version>
+        </dependency>
+    
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.57</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.57</version>
+        </dependency>
+    
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.7</version>
+        </dependency>
+    </dependencies>
+
+</project>
