@@ -33,8 +33,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.log4j.Logger;
 
 public class KafkaUtils {
@@ -49,76 +47,91 @@ public class KafkaUtils {
   }
 
   /**
-   * Gets the previous blockchain tip hash and serial number from Kafka.
+   * Gets the previous blockchain tip hash and serial number from Kafka, for the given remote container name
    *
-   * @param topicPrefix the optional topic prefix, such as "blockchain_"
-   * @param blockchainName the blockchain name, such as "test-blockchain-001"
-   * @param kafkaHostAddresses the kafka host addresses, such as "172.18.0.3:9092"
+   * @param topic the topic (blockchain name)
+   * @param consumerProperties the Kafka consumer properties
    *
    * @return the Kafka blockchain info, or null if not found
    */
-  public static KafkaBlockchainInfo getKafkaBlockchainInfo(
-          final String topicPrefix,
-          final String blockchainName,
-          final String kafkaHostAddresses) {
+  public static KafkaBlockchainInfo getKafkaTopicInfo(
+          final String topic,
+          final Properties consumerProperties) {
     //Preconditions
-    assert blockchainName != null && !blockchainName.isEmpty() : "blockchainName must be a non-empty string";
-    assert kafkaHostAddresses != null && !kafkaHostAddresses.isEmpty() : "kafkaIPAddress must be a non-empty string";
+    assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    assert consumerProperties != null : "consumerProperties must not be null";
 
-    LOGGER.info("getPreviousSHA256Hash, blockchainName: " + blockchainName);
-    final Properties consumerProperties = new Properties();
-    consumerProperties.put("bootstrap.servers", kafkaHostAddresses);
-    consumerProperties.put("group.id", "get most recent hash-chained data message");
-    consumerProperties.put("key.deserializer", StringDeserializer.class.getName());
-    consumerProperties.put("value.deserializer", ByteArrayDeserializer.class.getName());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("getKafkaTopicInfo, containerName: " + topic);
+    }
     final KafkaConsumer kafkaConsumer = new KafkaConsumer<>(consumerProperties);
 
     final Collection<String> topics = new ArrayList<>();
-    final String topic = topicPrefix + blockchainName;
     topics.add(topic);
     // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
     kafkaConsumer.subscribe(topics);
     kafkaConsumer.poll(100); // timeout
     // get the assigned partitions for this topic, which for this application will be every partition for the topic
     final Collection<TopicPartition> assignedTopicPartitions = kafkaConsumer.assignment();
-    LOGGER.info("assignedTopicPartitions: " + assignedTopicPartitions);
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("assignedTopicPartitions: " + assignedTopicPartitions);
+    }
     final Map<TopicPartition, Long> offsetDictionary = kafkaConsumer.endOffsets(assignedTopicPartitions);
-    LOGGER.info("offsetDictionary: " + offsetDictionary);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("offsetDictionary: " + offsetDictionary);
+    }
     for (final Map.Entry<TopicPartition, Long> entry : offsetDictionary.entrySet()) {
       // seek to the last written record offset for each of the assigned partitions for this topic
       final TopicPartition topicPartition = entry.getKey();
-      final long offset = entry.getValue() - 1;
-      if (offset > 0) {
-        LOGGER.info("seeking topicPartition: " + topicPartition + ", at offset " + offset);
-        kafkaConsumer.seek(topicPartition, offset);
+      final long offset;
+      if (entry.getValue() > 0) {
+        offset = entry.getValue() - 1;
       } else {
-        LOGGER.info("found initialized topic: " + topicPartition + ", at offset " + offset);
-        return null;
+        offset = 0;
       }
+
+      LOGGER.debug("seeking topicPartition: " + topicPartition + ", at offset " + offset);
+      kafkaConsumer.seek(topicPartition, offset);
     }
     // read the most recent consumer record, deserialize the tamper evident object, and return its SHA hash value.
-    final ConsumerRecords consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
+    final ConsumerRecords consumerRecords = kafkaConsumer.poll(100); // timeout
     kafkaConsumer.commitAsync();
     final Iterator<ConsumerRecord<String, byte[]>> consumerRecord_iter = consumerRecords.records(topic).iterator();
-    SHA256Hash previousSHA256Hash;
-    long serialNbr;
+    final SHA256Hash previousSHA256Hash;
+    final long serialNbr;
     if (consumerRecord_iter.hasNext()) {
       final ConsumerRecord<String, byte[]> consumerRecord = consumerRecord_iter.next();
-      LOGGER.info("consumerRecord: " + consumerRecord);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("consumerRecord: " + consumerRecord);
+      }
       final byte[] serializedTEObject = consumerRecord.value();
+      TEObject teObject;
       try {
-        final TEObject teObject = (TEObject) Serialization.deserialize(serializedTEObject);
-        LOGGER.info("  deserialized teObject " + teObject);
-        previousSHA256Hash = teObject.getTEObjectHash();
-        serialNbr = teObject.getSerialNbr();
-        LOGGER.info("  previousSHA256Hash " + previousSHA256Hash);
+        teObject = (TEObject) Serialization.deserialize(serializedTEObject);
       } catch (Exception ex) {
-        LOGGER.info("  obsolete records found for " + topic);
+        teObject = null;
+      }
+      if (teObject == null) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  invalid record found for " + topic);
+        }
         previousSHA256Hash = null;
         serialNbr = 0;
+      } else {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  deserialized teObject " + teObject);
+        }
+        previousSHA256Hash = teObject.getTEObjectHash();
+        serialNbr = teObject.getSerialNbr();
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  previousSHA256Hash " + previousSHA256Hash);
+        }
       }
     } else {
-      LOGGER.warn("  no records found for " + topic);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  no records found for " + topic);
+      }
       previousSHA256Hash = null;
       serialNbr = 0;
     }
@@ -130,9 +143,13 @@ public class KafkaUtils {
       return null;
     }
     final KafkaBlockchainInfo kafkaBlockchainInfo = new KafkaBlockchainInfo(
-            blockchainName,
+            topic,
             previousSHA256Hash,
             serialNbr);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  kafkaBlockchainInfo " + kafkaBlockchainInfo);
+    }
     return kafkaBlockchainInfo;
   }
+
 }

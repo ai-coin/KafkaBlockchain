@@ -73,8 +73,6 @@ public class TestKafkaBlockchainOnline implements Callback {
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainVerifierOfflineTest.class);
   // the test blockchain message consumer thread
   private static Thread consumerLoopThread;
-  // the indicator used to stop the consumer loop thread when the test is completed
-  private static boolean isDone = false;
 
   // the Kafka producer to which tamper evident messages are sent for logging
   private KafkaProducer<String, byte[]> kafkaProducer;
@@ -286,6 +284,8 @@ public class TestKafkaBlockchainOnline implements Callback {
     private final KafkaConsumer<String, byte[]> kafkaConsumer;
     // the topics, which has only one topic, which is the the test blockchain name
     private final List<String> topics = new ArrayList<>();
+    // the indicator used to stop the consumer loop thread when the test is completed
+    private boolean isDone = false;
 
     /**
      * Constructs a new ConsumerLoop instance.d
