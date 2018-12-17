@@ -17,6 +17,7 @@
  */
 package com.ai_blockchain;
 
+import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 import org.junit.After;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  *
@@ -169,4 +171,24 @@ public class TEObjectTest {
     assertEquals("[TEObject 1, wrapping a payload of 21 bytes]", teObject1.toString());
   }
 
+  public void testTEObject() throws IOException {
+    LOGGER.info("testTEObject");
+    final String testData1 = "test data 1";
+    final byte[] testData1Bytes = testData1.getBytes("UTF-8");
+    final String testData1BytesHex = Hex.toHexString(testData1Bytes);
+    assertEquals("7465737420646174612031", testData1BytesHex);
+    final byte[] serializedTestData1Bytes = Hex.decode(testData1BytesHex);
+    final String deserializedTestData1 = new String(serializedTestData1Bytes, "UTF-8");
+    assertEquals("test data 1", deserializedTestData1);
+    assertEquals(testData1, deserializedTestData1);
+    SHA256Hash previousTEObjectHash = SHA256Hash.makeSHA256Hash(""); // mock value for unit test
+    final TEObject teObject = new TEObject(
+            testData1Bytes,
+            previousTEObjectHash,
+            1);
+    final byte[] payload = (byte[]) teObject.getPayload();
+    final String deserializedPayload = new String(payload, "UTF-8");
+    assertEquals("test data 1", deserializedPayload);
+
+  }
 }

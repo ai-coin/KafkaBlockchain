@@ -49,7 +49,7 @@ public class KafkaBlockchainVerifier {
   public static final int ERROR_STATUS = 100;
 
   /**
-   * Constructs a new SkillTemplate instance.
+   * Constructs a new KafkaBlockchainVerifier instance.
    */
   public KafkaBlockchainVerifier() {
   }

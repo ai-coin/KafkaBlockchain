@@ -108,7 +108,7 @@ public class KafkaBlockchainInfo {
             .append(serialNbr)
             .append(", hash")
             .append(sha256Hash)
-            .append(", timestamp")
+            .append(", timestamp ")
             .append(timestamp)
             .toString();
   }

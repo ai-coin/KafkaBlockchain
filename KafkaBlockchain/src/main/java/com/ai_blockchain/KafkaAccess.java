@@ -1,0 +1,131 @@
+/*
+ * Copyright (C) 2018 by Stephen L. Reed.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.ai_blockchain;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.KafkaFuture;
+import org.apache.log4j.Logger;
+
+/**
+ * KafkaAccess.java
+ *
+ * Description: Provides Kafka access utilities, notably the ability to create a topic.
+ *
+ * Copyright (C) Jan 8, 2018, Stephen L. Reed.
+ */
+public class KafkaAccess {
+
+  // the logger
+  private final static Logger LOGGER = Logger.getLogger(KafkaAccess.class);
+  // the admin client configuration properties
+  private final Properties properties;
+  // the admin client
+  private final AdminClient adminClient;
+
+  /**
+   * Constructs a new KafkaAccess instance.
+   *
+   * @param kafkaHostAddresses the Kafka host addresses, such as 172.18.0.3:9092
+   */
+  public KafkaAccess(final String kafkaHostAddresses) {
+    //Preconditions
+    assert kafkaHostAddresses != null && !kafkaHostAddresses.isEmpty() : "kafkaHostAddresses must be a non-empty string";
+
+    properties = new Properties();
+    properties.put("bootstrap.servers", kafkaHostAddresses);
+    LOGGER.info("KafkaAccess bootstrap servers: " + kafkaHostAddresses);
+    // the admin client
+    adminClient = AdminClient.create(properties);
+    LOGGER.info("KafkaAccess known topics...");
+    adminClient.listTopics();
+  }
+
+  /**
+   * Creates the given topic.
+   *
+   * @param topic the given topic
+   * @param numPartitions number of partitions
+   * @param replicationFactor the replication factor
+   */
+  public void createTopic(
+          final String topic,
+          final int numPartitions,
+          final short replicationFactor) {
+    //Preconditions
+    assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    assert adminClient != null : "adminClient must not be null";
+
+    final List<NewTopic> topics = new ArrayList<>();
+    final NewTopic newTopic = new NewTopic(
+            topic, // name
+            numPartitions,
+            replicationFactor);
+    topics.add(newTopic);
+    final CreateTopicsResult createTopicsResult = adminClient.createTopics(topics);
+    LOGGER.debug("  createTopicsResult topics=" + createTopicsResult.values().keySet());
+
+    //Postconditions
+    assert createTopicsResult.values().keySet().size() == 1;
+    final String key = createTopicsResult.values().keySet().iterator().next();
+    assert key != null && !key.isEmpty() : "key must be a non-empty string";
+    assert key.equals(topic);
+  }
+
+  /**
+   * List the topics available in the cluster with the default options.
+   *
+   * @return the topics available in the cluster
+   */
+  public List<String> listTopics() {
+    //Preconditions
+    assert adminClient != null : "adminClient must not be null";
+
+    final ListTopicsResult listTopicsResult = adminClient.listTopics();
+    LOGGER.debug("  listTopicsResult=" + listTopicsResult);
+    final KafkaFuture<Set<String>> kafkaFutureNames = listTopicsResult.names();
+    final Set<String> names;
+    try {
+      names = kafkaFutureNames.get(10, TimeUnit.SECONDS);
+    } catch (InterruptedException | ExecutionException | TimeoutException ex) {
+      throw new RuntimeException(ex);
+    }
+    final List<String> topics = new ArrayList<>();
+    topics.addAll(names);
+    Collections.sort(topics);
+    return topics;
+  }
+
+  /**
+   * Closes this object and releases its resources.
+   *
+   */
+  public void close() {
+    adminClient.close();
+  }
+    }
