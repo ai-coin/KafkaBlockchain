@@ -3,7 +3,7 @@
  *
  * Created on December 17, 2018.
  *
- * Description:  Provides a tamper-evident blockchain on a stream of Kafka messages.
+ * Description:  Demonstrates a tamper-evident blockchain on a stream of Kafka messages.
  *
  * Copyright (C) 2007 Stephen L. Reed.
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -30,8 +30,8 @@
  * Launch Kafka in a second terminal session after ZooKeeper initializes.
  * > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
  *
- * Navigate to this project's scripts directory, and launch the script in a third terminal session which runs the KafkaBlockchain online tests.
- * > ./run-test-kafka-blockchain.sh
+ * Navigate to this project's scripts directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
+ * > ./run-kafka-blockchain-demo.sh
  *
  * After the tests are complete, shut down the Kafka session with Ctrl-C.
  *
@@ -39,19 +39,29 @@
  *
  * </code>
  */
-package com.ai_blockchain;
+package com.ai_blockchain.samples;
 
-import java.io.InvalidClassException;
+import com.ai_blockchain.KafkaAccess;
+import com.ai_blockchain.KafkaBlockchainInfo;
+import com.ai_blockchain.KafkaUtils;
+import com.ai_blockchain.SHA256Hash;
+import com.ai_blockchain.Serialization;
+import com.ai_blockchain.TEObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -63,14 +73,14 @@ import org.apache.log4j.Logger;
  *
  * @author reed
  */
-public class KafkaBlockchainDemo {
+public class KafkaBlockchainDemo implements Callback {
 
   // the logger
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainDemo.class);
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
   // the blockchain name (topic)
-  private static final String BLOCKCHAIN_NAME = "kafka-demo-blockchain";
+  private static final String BLOCKCHAIN_NAME = "kafka-demo-blockchain-2";
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
   // the Kafka message consumer group id
@@ -132,26 +142,22 @@ public class KafkaBlockchainDemo {
     kafkaAccess.createTopic(
             BLOCKCHAIN_NAME, // topic
             3, // numPartitions
-            (short) 3); // replicationFactor
+            (short) 1); // replicationFactor
     LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
 
-    if (kafkaProducer == null) {
-      final Properties props = new Properties();
-      props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
-      props.put("client.id", "TEKafkaProducer");
-      props.put("key.serializer", StringSerializer.class.getName());
-      props.put("value.serializer", ByteArraySerializer.class.getName());
-      kafkaProducer = new KafkaProducer<>(props);
-    }
-    if (kafkaConsumerLoopThread == null) {
-      consumerLoop = new ConsumerLoop(
-              KAFKA_GROUP_ID, // groupId
-              BLOCKCHAIN_NAME); // topic,
-      kafkaConsumerLoopThread = new Thread(consumerLoop);
-      kafkaConsumerLoopThread.setName("kafkaConsumer");
-      kafkaConsumerLoopThread.start();
-      LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME);
-    }
+    final Properties props = new Properties();
+    props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
+    props.put("client.id", "TEKafkaProducer");
+    props.put("key.serializer", StringSerializer.class.getName());
+    props.put("value.serializer", ByteArraySerializer.class.getName());
+    kafkaProducer = new KafkaProducer<>(props);
+
+    consumerLoop = new ConsumerLoop(KAFKA_HOST_ADDRESSES);
+    kafkaConsumerLoopThread = new Thread(consumerLoop);
+    kafkaConsumerLoopThread.setName("kafkaConsumer");
+    kafkaConsumerLoopThread.start();
+    LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME);
+
   }
 
   /**
@@ -192,8 +198,6 @@ public class KafkaBlockchainDemo {
       }
     }
 
-    LOGGER.info("checked serialization: " + Serialization.serializeDeserialize(payload));
-
     final TEObject teObject = new TEObject(
             payload,
             kafkaBlockchainInfo.getSHA256Hash(),
@@ -207,6 +211,19 @@ public class KafkaBlockchainDemo {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("newKafkaBlockchainInfo " + newKafkaBlockchainInfo);
     }
+    blockchainHashDictionary.put(topic, newKafkaBlockchainInfo);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("saving Kafka blockchain data " + teObject + ", topic '" + topic);
+    }
+    final byte[] serializedTEObject = Serialization.serialize(teObject);
+    // send message with key
+    final ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>(
+            topic,
+            serializedTEObject); // value
+    final Future<RecordMetadata> future = kafkaProducer.send(
+            producerRecord,
+            this);  // callback
+    LOGGER.info("send producer record OK");
   }
 
   /**
@@ -225,6 +242,26 @@ public class KafkaBlockchainDemo {
     consumerProperties.put("key.deserializer", StringDeserializer.class.getName());
     consumerProperties.put("value.deserializer", ByteArrayDeserializer.class.getName());
     return KafkaUtils.getKafkaTopicInfo(topic, consumerProperties);
+  }
+
+  /**
+   * A callback method the user can implement to provide asynchronous handling of request completion. This method will be called when the record sent to the
+   * server has been acknowledged. Exactly one of the arguments will be non-null.
+   *
+   * @param metadata The metadata for the record that was sent (i.e. the partition and offset). Null if an error occurred.
+   * @param exception The exception thrown during processing of this record. Null if no error occurred. Possible thrown exceptions include:
+   *
+   * Non-Retriable exceptions (fatal, the message will never be sent):
+   *
+   * InvalidTopicException OffsetMetadataTooLargeException RecordBatchTooLargeException RecordTooLargeException UnknownServerException
+   *
+   * Retriable exceptions (transient, may be covered by increasing #.retries):
+   *
+   * CorruptRecordException InvalidMetadataException NotEnoughReplicasAfterAppendException NotEnoughReplicasException OffsetOutOfRangeException TimeoutException
+   * UnknownTopicOrPartitionException
+   */
+  @Override
+  public void onCompletion(final RecordMetadata metadata, final Exception exception) {
   }
 
   /**
@@ -268,7 +305,7 @@ public class KafkaBlockchainDemo {
   }
 
   /**
-   * Provides a Kafka consumer loop that polls for messages to this blockchained topic.
+   * Provides a Kafka consumer loop that polls for messages to the test topic.
    */
   static class ConsumerLoop implements Runnable {
 
@@ -276,89 +313,29 @@ public class KafkaBlockchainDemo {
     private static final Logger LOGGER = Logger.getLogger(ConsumerLoop.class);
     // the Kafka consumer
     private final KafkaConsumer<String, byte[]> kafkaConsumer;
-    // the topics, which has only one topic, which is this container name, as recipient of messages from other
-    // containers
+    // the topics, which has only one topic, which is the the test blockchain name
     private final List<String> topics = new ArrayList<>();
     // the indicator used to stop the consumer loop thread when the test is completed
     private boolean isDone = false;
 
     /**
-     * Constructs a new ConsumerLoop instance.
+     * Constructs a new ConsumerLoop instance.d
      *
-     * @param groupId the consumer group id, which organizes a set of consumers of a topic
-     * @param topic the topic, which is this container name
+     * @param kafkaHostAddresses the kafka host addresses, such as 172.18.0.2:9092
      */
-    public ConsumerLoop(
-            final String groupId,
-            final String topic) {
-      //Preconditions
-      assert groupId != null && !groupId.isEmpty() : "groupId must be a non-empty string";
-      assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    public ConsumerLoop(final String kafkaHostAddresses) {
+      assert kafkaHostAddresses != null && !kafkaHostAddresses.isEmpty() : "kafkaHostAddresses must be a non-empty string";
 
-      LOGGER.info("consuming inbound messages for Kafka topic " + topic);
-      topics.add(topic);
+      LOGGER.info("consuming inbound messages for Kafka topic " + BLOCKCHAIN_NAME);
+      topics.add(BLOCKCHAIN_NAME);
       Properties props = new Properties();
-      props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
-      props.put("group.id", groupId);
+      props.put("bootstrap.servers", kafkaHostAddresses);
+      props.put("group.id", "test-consumer-group-id");
       props.put("key.deserializer", StringDeserializer.class.getName());
       props.put("value.deserializer", ByteArrayDeserializer.class.getName());
 
       kafkaConsumer = new KafkaConsumer<>(props);
 
-    }
-
-    @Override
-    public void run() {
-      try (kafkaConsumer) {
-        kafkaConsumer.subscribe(topics);
-        while (!isDone) {
-          // Kafka transmits messages in compressed JSON format.
-          // Records are key value pairs per JSON
-          //
-          // Payloads are wrapped with TEObjects which are serialized into bytes then passed to Kafka,
-          // which then serializes the bytes into a key-value JSON object for compressed transmission.
-          //
-          // Processing at the recipient container happens in the reverse order.
-          // The consumer receives the bytes from deserializing the received JSON message, then
-          // deserializes the TEObject, which contains the payload object.
-          ConsumerRecords<String, byte[]> consumerRecords;
-          try {
-            consumerRecords = kafkaConsumer.poll(100);
-          } catch (Exception ex) {
-            LOGGER.info("Kafka broker exception " + ex.getMessage());
-            continue;
-          }
-          for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("received consumerRecord " + consumerRecord);
-            }
-            final byte[] serializedTEObject = consumerRecord.value();
-            final TEObject teObject;
-            try {
-              teObject = (TEObject) Serialization.deserialize(serializedTEObject);
-            } catch (Exception ex) {
-              if (ex instanceof InvalidClassException) {
-                LOGGER.warn("  dropping old version of TEObject");
-                continue;
-              } else {
-                throw new RuntimeException(ex);
-              }
-            }
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("  deserialized teObject " + teObject);
-            }
-            final DemoPayload demoPayload = (DemoPayload) Serialization.deserialize(teObject.getPayloadBytes());
-            LOGGER.info("  deserialized message " + demoPayload);
-          }
-        }
-
-        /**
-         * Note that InterruptedExceptions can occur when the consumer thread is closed, which are ignorable.
-         */
-        LOGGER.info("quitting the Kafka consumer loop thread");
-      } catch (WakeupException ex) {
-        // ignore for shutdown
-      }
     }
 
     /**
@@ -367,6 +344,46 @@ public class KafkaBlockchainDemo {
     public void terminate() {
       isDone = true;
       kafkaConsumer.wakeup();
+    }
+
+    @Override
+    public void run() {
+      try {
+        LOGGER.info("subscribing to " + topics);
+        kafkaConsumer.subscribe(topics);
+        while (!isDone) {
+          // Kafka transmits messages in compressed JSON format.
+          // Records are key value pairs per JSON
+          //
+          // In the Kafka Blockchain, the blockchain name is the topic.
+          // The key is provided by the caller.
+          // Kafka Blockchain Messages are wrapped with TEObjects which are serialized into bytes then passed to Kafka,
+          // which then serializes the bytes into a key-value JSON object for compressed transmission.
+          //
+          // Processing at the recipient container happens in the reverse order.
+          // The consumer receives the bytes from deserializing the received JSON message, then
+          // deserializes the TEObject, which contains the Message object.
+          LOGGER.info("consumer loop poll...");
+          ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
+          for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
+            LOGGER.info("received consumerRecord " + consumerRecord);
+            final byte[] serializedTEObject = consumerRecord.value();
+            final TEObject teObject = (TEObject) Serialization.deserialize(serializedTEObject);
+            LOGGER.info("  deserialized teObject " + teObject);
+            Serializable payload = teObject.getPayload();
+            LOGGER.info("  payload: " + payload);
+          }
+        }
+      } catch (WakeupException e) {
+        // ignore for shutdown
+      } finally {
+        LOGGER.info("closing the consumer loop...");
+        kafkaConsumer.commitSync();
+        kafkaConsumer.unsubscribe();
+        kafkaConsumer.close(
+                1, // timeout
+                TimeUnit.SECONDS);
+      }
     }
   }
 
