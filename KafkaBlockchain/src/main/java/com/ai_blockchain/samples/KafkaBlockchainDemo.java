@@ -38,6 +38,8 @@
  * Shut down the ZooKeeper session with Ctrl-C.
  *
  * </code>
+ *
+ * Compare with a python blockchain implementation: https://hackernoon.com/a-blockchain-experiment-with-apache-kafka-97ee0ab6aefc
  */
 package com.ai_blockchain.samples;
 
@@ -329,7 +331,7 @@ public class KafkaBlockchainDemo implements Callback {
       topics.add(BLOCKCHAIN_NAME);
       Properties props = new Properties();
       props.put("bootstrap.servers", kafkaHostAddresses);
-      props.put("group.id", "test-consumer-group-id");
+      props.put("group.id", KAFKA_GROUP_ID);
       props.put("key.deserializer", StringDeserializer.class.getName());
       props.put("value.deserializer", ByteArrayDeserializer.class.getName());
 

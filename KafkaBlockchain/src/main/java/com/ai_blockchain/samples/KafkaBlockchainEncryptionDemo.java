@@ -58,7 +58,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -361,7 +360,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
       topics.add(BLOCKCHAIN_NAME);
       Properties props = new Properties();
       props.put("bootstrap.servers", kafkaHostAddresses);
-      props.put("group.id", "test-consumer-group-id");
+      props.put("group.id", KAFKA_GROUP_ID);
       props.put("key.deserializer", StringDeserializer.class.getName());
       props.put("value.deserializer", ByteArrayDeserializer.class.getName());
 
