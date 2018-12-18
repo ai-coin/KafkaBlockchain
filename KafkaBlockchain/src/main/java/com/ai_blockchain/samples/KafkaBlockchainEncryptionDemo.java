@@ -1,9 +1,9 @@
 /*
- * KafkaBlockchainDemo.java
+ * KafkaBlockchainEncryptionDemo.java
  *
  * Created on December 17, 2018.
  *
- * Description:  Demonstrates a tamper-evident blockchain on a stream of Kafka messages.
+ * Description:  Demonstrates a tamper-evident blockchain on a stream of encrypted Kafka messages.
  *
  * Copyright (C) 2018 Stephen L. Reed.
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -31,7 +31,7 @@
  * > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
  *
  * Navigate to this project's scripts directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
- * > ./run-kafka-blockchain-demo.sh
+ * > ./run-kafka-blockchain-encryption-demo.sh
  *
  * After the tests are complete, shut down the Kafka session with Ctrl-C.
  *
@@ -41,13 +41,16 @@
  */
 package com.ai_blockchain.samples;
 
+import com.ai_blockchain.ByteUtils;
 import com.ai_blockchain.KafkaAccess;
 import com.ai_blockchain.KafkaBlockchainInfo;
 import com.ai_blockchain.KafkaUtils;
 import com.ai_blockchain.SHA256Hash;
 import com.ai_blockchain.Serialization;
+import com.ai_blockchain.SymmetricEncryption;
 import com.ai_blockchain.TEObject;
 import java.io.Serializable;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +58,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -68,15 +72,17 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.log4j.Logger;
+import org.bouncycastle.crypto.digests.MD5Digest;
+import org.bouncycastle.crypto.prng.DigestRandomGenerator;
 
 /**
  *
  * @author reed
  */
-public class KafkaBlockchainDemo implements Callback {
+public class KafkaBlockchainEncryptionDemo implements Callback {
 
   // the logger
-  private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainDemo.class);
+  private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainEncryptionDemo.class);
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
   // the blockchain name (topic)
@@ -92,6 +98,19 @@ public class KafkaBlockchainDemo implements Callback {
   // the blockchain hash dictionary, blockchain name --> Kafka blockchain info
   // this demo only uses one blockchain however
   private final Map<String, KafkaBlockchainInfo> blockchainHashDictionary = new HashMap<>();
+  // the demonstration encryption key, which in production is managed by the application
+  final static byte[] RAW_KEY_DATA = new byte[32];
+
+  /**
+   * Constructs a new KafkaBlockchainEncryptionDemo instance.
+   */
+  public KafkaBlockchainEncryptionDemo() {
+    /**
+     * For this demonstration the encryption key is randomly generated. In production, this would be managed by the application.
+     */
+    (new DigestRandomGenerator(new MD5Digest())).nextBytes(RAW_KEY_DATA);
+    LOGGER.info("rawKeyBytes " + ByteUtils.toHex(RAW_KEY_DATA));
+  }
 
   /**
    * Executes this Kafka blockchain demonstration.
@@ -99,27 +118,28 @@ public class KafkaBlockchainDemo implements Callback {
    * @param args the command line arguments (unused)
    */
   public static void main(final String[] args) {
-    final KafkaBlockchainDemo kafkaBlockchainDemo = new KafkaBlockchainDemo();
+    final KafkaBlockchainEncryptionDemo kafkaBlockchainDemo = new KafkaBlockchainEncryptionDemo();
     kafkaBlockchainDemo.activateKafkaMessaging();
-    kafkaBlockchainDemo.produceDemoBlockchain();
+    kafkaBlockchainDemo.produceDemoEncryptedBlockchain();
   }
 
   /**
-   * Creates demonstration payloads and puts them into a Kafka blockchain.
+   * Creates demonstration payloads, encrypts and puts them into a Kafka blockchain.
    */
-  public void produceDemoBlockchain() {
-    produce(
-            new DemoPayload("abc", 1), // payload
-            BLOCKCHAIN_NAME); // topic
-    produce(
-            new DemoPayload("def", 2), // payload
-            BLOCKCHAIN_NAME); // topic
-    produce(
-            new DemoPayload("ghi", 3), // payload
-            BLOCKCHAIN_NAME); // topic
-    produce(
-            new DemoPayload("jkl", 4), // payload
-            BLOCKCHAIN_NAME); // topic
+  public void produceDemoEncryptedBlockchain() {
+
+    produce(new DemoPayload("abc", 1), // payload
+            BLOCKCHAIN_NAME, // topic
+            RAW_KEY_DATA);
+    produce(new DemoPayload("def", 2), // payload
+            BLOCKCHAIN_NAME, // topic
+            RAW_KEY_DATA);
+    produce(new DemoPayload("ghi", 3), // payload
+            BLOCKCHAIN_NAME, // topic
+            RAW_KEY_DATA);
+    produce(new DemoPayload("jkl", 4), // payload
+            BLOCKCHAIN_NAME, // topic
+            RAW_KEY_DATA);
     LOGGER.info("waiting 5 seconds for the demonstration blockchain consumer to complete processing ...");
     try {
       Thread.sleep(5_000);
@@ -161,17 +181,20 @@ public class KafkaBlockchainDemo implements Callback {
   }
 
   /**
-   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object to the Kafka broker.
+   * Encrypts and wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object to the Kafka broker.
    *
    * @param payload the given payload
    * @param topic the topic, which is the blockchain name
+   * @param rawKeyData the 32 byte key which encrypts and decrypts the payload
    */
   public void produce(
           final Serializable payload,
-          final String topic) {
+          final String topic,
+          final byte[] rawKeyData) {
     //Preconditions
     assert payload != null : "payload must not be null";
     assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    assert rawKeyData != null && rawKeyData.length == 32 : "rawKeyData must be 32 bytes in length";
 
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("message topic " + topic);
@@ -198,8 +221,17 @@ public class KafkaBlockchainDemo implements Callback {
       }
     }
 
+    final byte[] plaintextBytes = Serialization.serialize(payload);
+    final SymmetricEncryption symmetricEncryption = new SymmetricEncryption(rawKeyData);
+    final byte[] ciphertextBytes;
+    try {
+      ciphertextBytes = symmetricEncryption.encode(plaintextBytes);
+    } catch (GeneralSecurityException ex) {
+      throw new RuntimeException(ex);
+    }
+
     final TEObject teObject = new TEObject(
-            payload,
+            ciphertextBytes, // payload
             kafkaBlockchainInfo.getSHA256Hash(),
             kafkaBlockchainInfo.getSerialNbr());
 
@@ -369,7 +401,16 @@ public class KafkaBlockchainDemo implements Callback {
             final byte[] serializedTEObject = consumerRecord.value();
             final TEObject teObject = (TEObject) Serialization.deserialize(serializedTEObject);
             LOGGER.info("  deserialized teObject " + teObject);
-            Serializable payload = teObject.getPayload();
+            final byte[] ciphertextBytes = (byte[]) teObject.getPayload();
+
+            final SymmetricEncryption symmetricEncryption = new SymmetricEncryption(RAW_KEY_DATA);
+            final byte[] plaintextBytes;
+            try {
+              plaintextBytes = symmetricEncryption.decode(ciphertextBytes);
+            } catch (GeneralSecurityException ex) {
+              throw new RuntimeException(ex);
+            }
+            final Serializable payload = Serialization.deserialize(plaintextBytes);
             LOGGER.info("  payload: " + payload);
           }
         }
