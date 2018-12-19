@@ -99,7 +99,7 @@ public class KafkaBlockchainInfoTest {
   public void testToString() {
     LOGGER.info("toString");
     KafkaBlockchainInfo instance = makeKafkaBlockchainInfo();
-    assertTrue(instance.toString().startsWith("[KafkaBlockchainInfo test blockchain, serial 1234, hash45aeddf736951256e38dcbb5beab9834e6e12be46fd51d1a00ae7bbf8ac67e29, timestamp"));
+    assertTrue(instance.toString().startsWith("[KafkaBlockchainInfo test blockchain, serial 1234, hash 45aeddf736951256e38dcbb5beab9834e6e12be46fd51d1a00ae7bbf8ac67e29, timestamp"));
   }
 
   /**

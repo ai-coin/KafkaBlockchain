@@ -30,8 +30,8 @@
  * Launch Kafka in a second terminal session after ZooKeeper initializes.
  * > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
  *
- * Navigate to this project's scripts directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
- * > ./run-kafka-blockchain-encryption-demo.sh
+ * Navigate to this project's directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
+ * > scripts/run-kafka-blockchain-encryption-demo.sh
  *
  * After the tests are complete, shut down the Kafka session with Ctrl-C.
  *
@@ -85,11 +85,11 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
   // the blockchain name (topic)
-  private static final String BLOCKCHAIN_NAME = "kafka-demo-blockchain-2";
+  private static final String BLOCKCHAIN_NAME_3 = "kafka-demo-blockchain-3";
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
   // the Kafka message consumer group id
-  private static final String KAFKA_GROUP_ID = "demo-blockchain-consumers";
+  private static final String KAFKA_GROUP_ID = "demo-encryption-blockchain-consumers";
   // the Kafka message consumer
   private ConsumerLoop consumerLoop;
   // the Kafka message consumer loop thread
@@ -128,16 +128,16 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
   public void produceDemoEncryptedBlockchain() {
 
     produce(new DemoPayload("abc", 1), // payload
-            BLOCKCHAIN_NAME, // topic
+            BLOCKCHAIN_NAME_3, // topic
             RAW_KEY_DATA);
     produce(new DemoPayload("def", 2), // payload
-            BLOCKCHAIN_NAME, // topic
+            BLOCKCHAIN_NAME_3, // topic
             RAW_KEY_DATA);
     produce(new DemoPayload("ghi", 3), // payload
-            BLOCKCHAIN_NAME, // topic
+            BLOCKCHAIN_NAME_3, // topic
             RAW_KEY_DATA);
     produce(new DemoPayload("jkl", 4), // payload
-            BLOCKCHAIN_NAME, // topic
+            BLOCKCHAIN_NAME_3, // topic
             RAW_KEY_DATA);
     LOGGER.info("waiting 5 seconds for the demonstration blockchain consumer to complete processing ...");
     try {
@@ -158,8 +158,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
 
     LOGGER.info("activating Kafka messaging");
-    kafkaAccess.createTopic(
-            BLOCKCHAIN_NAME, // topic
+    kafkaAccess.createTopic(BLOCKCHAIN_NAME_3, // topic
             3, // numPartitions
             (short) 1); // replicationFactor
     LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
@@ -175,7 +174,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
     kafkaConsumerLoopThread = new Thread(consumerLoop);
     kafkaConsumerLoopThread.setName("kafkaConsumer");
     kafkaConsumerLoopThread.start();
-    LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME);
+    LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME_3);
 
   }
 
@@ -200,7 +199,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
     }
     KafkaBlockchainInfo kafkaBlockchainInfo;
     synchronized (blockchainHashDictionary) {
-      // get the previous message hash and serial number for the given recipient container
+      // get the previous message hash and serial number for the blockchain
       kafkaBlockchainInfo = blockchainHashDictionary.get(topic);
       if (kafkaBlockchainInfo == null) {
         kafkaBlockchainInfo = getKafkaTopicInfo(topic);
@@ -356,8 +355,8 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
     public ConsumerLoop(final String kafkaHostAddresses) {
       assert kafkaHostAddresses != null && !kafkaHostAddresses.isEmpty() : "kafkaHostAddresses must be a non-empty string";
 
-      LOGGER.info("consuming inbound messages for Kafka topic " + BLOCKCHAIN_NAME);
-      topics.add(BLOCKCHAIN_NAME);
+      LOGGER.info("consuming inbound messages for Kafka topic " + BLOCKCHAIN_NAME_3);
+      topics.add(BLOCKCHAIN_NAME_3);
       Properties props = new Properties();
       props.put("bootstrap.servers", kafkaHostAddresses);
       props.put("group.id", KAFKA_GROUP_ID);

@@ -34,11 +34,11 @@ public class KafkaBlockchainInfo {
   // the blockchain name
   private final String blockchainName;
   // the hash of the current chain tip
-  private final SHA256Hash sha256Hash;
+  private SHA256Hash sha256Hash;
   // the serial number
-  private final long serialNbr;
+  private long serialNbr;
   // the timestamp
-  private final Date timestamp;
+  private Date timestamp;
 
   /**
    * Constructs a new KafkaBlockchainInfo instance.
@@ -62,7 +62,8 @@ public class KafkaBlockchainInfo {
     timestamp = new Date();
   }
 
-  /** Gets the blockchain name.
+  /**
+   * Gets the blockchain name.
    *
    * @return the blockchain name
    */
@@ -70,7 +71,8 @@ public class KafkaBlockchainInfo {
     return blockchainName;
   }
 
-  /** Gets the hash of the current chain tip.
+  /**
+   * Gets the hash of the current chain tip.
    *
    * @return the hash of the current chain tip
    */
@@ -78,7 +80,20 @@ public class KafkaBlockchainInfo {
     return sha256Hash;
   }
 
-  /** Gets the serial number.
+  /**
+   * Sets the hash of the current chain tip.
+   *
+   * @param sha256Hash the hash of the current chain tip
+   */
+  public void setSha256Hash(final SHA256Hash sha256Hash) {
+    //Preconditions
+    assert sha256Hash != null : "sha256Hash must not be null";
+
+    this.sha256Hash = sha256Hash;
+  }
+
+  /**
+   * Gets the serial number.
    *
    * @return the serial number
    */
@@ -86,12 +101,45 @@ public class KafkaBlockchainInfo {
     return serialNbr;
   }
 
-  /** Gets the timestamp.
+  /**
+   * Sets the serial number.
+   *
+   * @param serialNbr the serial number
+   */
+  public void setSerialNbr(final long serialNbr) {
+    //Preconditions
+    assert serialNbr >= 0 : "serialNbr must not be negative";
+
+    this.serialNbr = serialNbr;
+  }
+
+  /**
+   * Increments the serial number.
+   *
+   */
+  public void incrementSerialNbr() {
+    serialNbr++;
+  }
+
+  /**
+   * Gets the timestamp.
    *
    * @return the timestamp
    */
   public Date getTimestamp() {
     return timestamp;
+  }
+
+  /**
+   * Sets the timestamp.
+   *
+   * @param timestamp the timestamp
+   */
+  public void setTimestamp(final Date timestamp) {
+    //Preconditions
+    assert timestamp != null : "timestamp must not be null";
+
+    this.timestamp = timestamp;
   }
 
   /**
@@ -106,7 +154,7 @@ public class KafkaBlockchainInfo {
             .append(blockchainName)
             .append(", serial ")
             .append(serialNbr)
-            .append(", hash")
+            .append(", hash ")
             .append(sha256Hash)
             .append(", timestamp ")
             .append(timestamp)

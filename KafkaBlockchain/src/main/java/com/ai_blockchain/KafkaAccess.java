@@ -59,10 +59,14 @@ public class KafkaAccess {
 
     properties = new Properties();
     properties.put("bootstrap.servers", kafkaHostAddresses);
-    LOGGER.info("KafkaAccess bootstrap servers: " + kafkaHostAddresses);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("KafkaAccess bootstrap servers: " + kafkaHostAddresses);
+    }
     // the admin client
     adminClient = AdminClient.create(properties);
-    LOGGER.info("KafkaAccess known topics...");
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("KafkaAccess known topics...");
+    }
     adminClient.listTopics();
   }
 
@@ -88,7 +92,9 @@ public class KafkaAccess {
             replicationFactor);
     topics.add(newTopic);
     final CreateTopicsResult createTopicsResult = adminClient.createTopics(topics);
-    LOGGER.debug("  createTopicsResult topics=" + createTopicsResult.values().keySet());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  createTopicsResult topics=" + createTopicsResult.values().keySet());
+    }
 
     //Postconditions
     assert createTopicsResult.values().keySet().size() == 1;
@@ -107,7 +113,9 @@ public class KafkaAccess {
     assert adminClient != null : "adminClient must not be null";
 
     final ListTopicsResult listTopicsResult = adminClient.listTopics();
-    LOGGER.debug("  listTopicsResult=" + listTopicsResult);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  listTopicsResult=" + listTopicsResult);
+    }
     final KafkaFuture<Set<String>> kafkaFutureNames = listTopicsResult.names();
     final Set<String> names;
     try {
@@ -128,4 +136,4 @@ public class KafkaAccess {
   public void close() {
     adminClient.close();
   }
-    }
+}

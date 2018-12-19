@@ -62,7 +62,7 @@ public class KafkaUtils {
     assert consumerProperties != null : "consumerProperties must not be null";
 
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("getKafkaTopicInfo, containerName: " + topic);
+      LOGGER.debug("getKafkaTopicInfo, topic: " + topic);
     }
     final KafkaConsumer kafkaConsumer = new KafkaConsumer<>(consumerProperties);
 
@@ -150,6 +150,37 @@ public class KafkaUtils {
       LOGGER.debug("  kafkaBlockchainInfo " + kafkaBlockchainInfo);
     }
     return kafkaBlockchainInfo;
+  }
+  
+  /**
+   * Positions the given KafkaConsumer at the beginning of its partitions for the given topic.
+   *
+   * @param kafkaConsumer the given Kafka consumer
+   * @param topic the topic
+   */
+  public static void seekToBeginning(
+          final KafkaConsumer kafkaConsumer,
+          final String topic) {
+    //Preconditions
+    assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    assert kafkaConsumer != null : "kafkaConsumer must not be null";
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("getKafkaTopicInfo, containerName: " + topic);
+    }
+
+    final Collection<String> topics = new ArrayList<>();
+    topics.add(topic);
+    // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
+    kafkaConsumer.subscribe(topics);
+    kafkaConsumer.poll(100); // timeout
+    // get the assigned partitions for this topic, which for this application will be every partition for the topic
+    final Collection<TopicPartition> assignedTopicPartitions = kafkaConsumer.assignment();
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("assignedTopicPartitions: " + assignedTopicPartitions);
+    }
+    kafkaConsumer.seekToBeginning(assignedTopicPartitions);
   }
 
 }

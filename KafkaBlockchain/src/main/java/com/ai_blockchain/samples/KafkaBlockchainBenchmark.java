@@ -30,8 +30,8 @@
  * Launch Kafka in a second terminal session after ZooKeeper initializes.
  * > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
  *
- * Navigate to this project's scripts directory, and launch the script in a third terminal session which runs the KafkaBlockchain benchmark all on one server.
- * > ./run-kafka-blockchain-blockchain.sh
+ * Navigate to this project's directory, and launch the script in a third terminal session which runs the KafkaBlockchain benchmark all on one server.
+ * > scripts/run-kafka-blockchain-blockchain.sh
  *
  * After the tests are complete, shut down the Kafka session with Ctrl-C.
  *

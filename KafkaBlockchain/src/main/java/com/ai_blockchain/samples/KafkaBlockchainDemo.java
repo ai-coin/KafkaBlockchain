@@ -30,8 +30,8 @@
  * Launch Kafka in a second terminal session after ZooKeeper initializes.
  * > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
  *
- * Navigate to this project's scripts directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
- * > ./run-kafka-blockchain-demo.sh
+ * Navigate to this project's directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
+ * > scripts/run-kafka-blockchain-demo.sh
  *
  * After the tests are complete, shut down the Kafka session with Ctrl-C.
  *
@@ -49,8 +49,10 @@ import com.ai_blockchain.KafkaUtils;
 import com.ai_blockchain.SHA256Hash;
 import com.ai_blockchain.Serialization;
 import com.ai_blockchain.TEObject;
+import com.ai_blockchain.ZooKeeperAccess;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +84,7 @@ public class KafkaBlockchainDemo implements Callback {
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
   // the blockchain name (topic)
-  private static final String BLOCKCHAIN_NAME = "kafka-demo-blockchain-2";
+  public static final String BLOCKCHAIN_NAME_2 = "kafka-demo-blockchain-2";
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
   // the Kafka message consumer group id
@@ -94,6 +96,22 @@ public class KafkaBlockchainDemo implements Callback {
   // the blockchain hash dictionary, blockchain name --> Kafka blockchain info
   // this demo only uses one blockchain however
   private final Map<String, KafkaBlockchainInfo> blockchainHashDictionary = new HashMap<>();
+  // the ZooKeeper access object
+  private final ZooKeeperAccess zooKeeperAccess;
+  // the indicator whether the first (genesis) blockchain record is being produced, in which case the hash and blockchain name are persisted 
+  // in ZooKeeper for this demonstration - and for production would be stored in a secret-keeping facility.
+  private boolean isBlockchainGenesis = true;
+  // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/demo-blockchain-genesis-<blockchain name>
+  public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/demo-blockchain-genesis-";
+
+  /**
+   * Constructs a new KafkaBlockchainDemo instance.
+   */
+  public KafkaBlockchainDemo() {
+    LOGGER.info("connecting to ZooKeeper...");
+    zooKeeperAccess = new ZooKeeperAccess();
+    zooKeeperAccess.connect(ZooKeeperAccess.ZOOKEEPER_CONNECT_STRING);
+  }
 
   /**
    * Executes this Kafka blockchain demonstration.
@@ -104,24 +122,13 @@ public class KafkaBlockchainDemo implements Callback {
     final KafkaBlockchainDemo kafkaBlockchainDemo = new KafkaBlockchainDemo();
     kafkaBlockchainDemo.activateKafkaMessaging();
     kafkaBlockchainDemo.produceDemoBlockchain();
+    kafkaBlockchainDemo.finalization();
   }
 
   /**
-   * Creates demonstration payloads and puts them into a Kafka blockchain.
+   * Closes the open resources.
    */
-  public void produceDemoBlockchain() {
-    produce(
-            new DemoPayload("abc", 1), // payload
-            BLOCKCHAIN_NAME); // topic
-    produce(
-            new DemoPayload("def", 2), // payload
-            BLOCKCHAIN_NAME); // topic
-    produce(
-            new DemoPayload("ghi", 3), // payload
-            BLOCKCHAIN_NAME); // topic
-    produce(
-            new DemoPayload("jkl", 4), // payload
-            BLOCKCHAIN_NAME); // topic
+  public void finalization() {
     LOGGER.info("waiting 5 seconds for the demonstration blockchain consumer to complete processing ...");
     try {
       Thread.sleep(5_000);
@@ -130,6 +137,22 @@ public class KafkaBlockchainDemo implements Callback {
     }
     // quit the consumer loop thread
     consumerLoop.terminate();
+    kafkaProducer.close();
+    zooKeeperAccess.close();
+  }
+
+  /**
+   * Creates demonstration payloads and puts them into a Kafka blockchain.
+   */
+  public void produceDemoBlockchain() {
+    produce(new DemoPayload("abc", 1), // payload
+            BLOCKCHAIN_NAME_2); // topic
+    produce(new DemoPayload("def", 2), // payload
+            BLOCKCHAIN_NAME_2); // topic
+    produce(new DemoPayload("ghi", 3), // payload
+            BLOCKCHAIN_NAME_2); // topic
+    produce(new DemoPayload("jkl", 4), // payload
+            BLOCKCHAIN_NAME_2); // topic
   }
 
   /**
@@ -141,11 +164,11 @@ public class KafkaBlockchainDemo implements Callback {
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
 
     LOGGER.info("activating Kafka messaging");
-    kafkaAccess.createTopic(
-            BLOCKCHAIN_NAME, // topic
+    kafkaAccess.createTopic(BLOCKCHAIN_NAME_2, // topic
             3, // numPartitions
             (short) 1); // replicationFactor
     LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
+    kafkaAccess.close();
 
     final Properties props = new Properties();
     props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
@@ -158,7 +181,7 @@ public class KafkaBlockchainDemo implements Callback {
     kafkaConsumerLoopThread = new Thread(consumerLoop);
     kafkaConsumerLoopThread.setName("kafkaConsumer");
     kafkaConsumerLoopThread.start();
-    LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME);
+    LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME_2);
 
   }
 
@@ -180,7 +203,7 @@ public class KafkaBlockchainDemo implements Callback {
     }
     KafkaBlockchainInfo kafkaBlockchainInfo;
     synchronized (blockchainHashDictionary) {
-      // get the previous message hash and serial number for the given recipient container
+      // get the previous message hash and serial number for the blockchain
       kafkaBlockchainInfo = blockchainHashDictionary.get(topic);
       if (kafkaBlockchainInfo == null) {
         kafkaBlockchainInfo = getKafkaTopicInfo(topic);
@@ -193,6 +216,7 @@ public class KafkaBlockchainDemo implements Callback {
         } else {
           LOGGER.info("retrieved previousTEObjectHash: " + kafkaBlockchainInfo);
         }
+        blockchainHashDictionary.put(topic, kafkaBlockchainInfo);
       } else {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("cached previousTEObjectHash: " + kafkaBlockchainInfo);
@@ -205,26 +229,36 @@ public class KafkaBlockchainDemo implements Callback {
             kafkaBlockchainInfo.getSHA256Hash(),
             kafkaBlockchainInfo.getSerialNbr());
 
-    // cache the blockchain's current tip hash in the dictionary
-    final KafkaBlockchainInfo newKafkaBlockchainInfo = new KafkaBlockchainInfo(
-            topic,
-            teObject.getTEObjectHash(),
-            teObject.getSerialNbr());
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("newKafkaBlockchainInfo " + newKafkaBlockchainInfo);
+    if (isBlockchainGenesis) {
+      isBlockchainGenesis = false;
+      // make a unique path for the named blockchain
+      final String path = makeZooKeeperPath();
+      // record the SHA256 hash for the genesis record
+      final String dataString = teObject.getTEObjectHash().toString();
+      LOGGER.info("genesis hash for " + KafkaBlockchainDemo.BLOCKCHAIN_NAME_2 + "=" + dataString);
+      // remove prior any prior versions
+      zooKeeperAccess.deleteRecursive(path);
+      // record the first produced block as the genesis
+      zooKeeperAccess.setDataString(path, dataString);
     }
-    blockchainHashDictionary.put(topic, newKafkaBlockchainInfo);
+
+    // cache the blockchain's current tip hash in the dictionary
+    kafkaBlockchainInfo.setSha256Hash(teObject.getTEObjectHash());
+    kafkaBlockchainInfo.incrementSerialNbr();
+    kafkaBlockchainInfo.setTimestamp(new Date());
+
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("saving Kafka blockchain data " + teObject + ", topic '" + topic);
+      LOGGER.debug("updated kafkaBlockchainInfo " + kafkaBlockchainInfo);
     }
     final byte[] serializedTEObject = Serialization.serialize(teObject);
     final ProducerRecord<String, byte[]> producerRecord = new ProducerRecord<>(
             topic,
             serializedTEObject); // value
+    // ignoring the future (which indicates completion or cancellation) in this demonstration
     final Future<RecordMetadata> future = kafkaProducer.send(
             producerRecord,
             this);  // callback
-    LOGGER.info("send producer record OK");
+    LOGGER.info("sent producer record " + teObject.toString());
   }
 
   /**
@@ -263,6 +297,16 @@ public class KafkaBlockchainDemo implements Callback {
    */
   @Override
   public void onCompletion(final RecordMetadata metadata, final Exception exception) {
+  }
+
+  /**
+   * Makes a ZooKeeper path to store the genesis hash for the demo blockchain.
+   *
+   * @return a ZooKeeper path
+   */
+  public static String makeZooKeeperPath() {
+    // make a unique path for the named blockchain
+    return ZK_GENESIS_PATH_PREFIX + BLOCKCHAIN_NAME_2;
   }
 
   /**
@@ -320,23 +364,21 @@ public class KafkaBlockchainDemo implements Callback {
     private boolean isDone = false;
 
     /**
-     * Constructs a new ConsumerLoop instance.d
+     * Constructs a new ConsumerLoop instance.
      *
      * @param kafkaHostAddresses the kafka host addresses, such as 172.18.0.2:9092
      */
     public ConsumerLoop(final String kafkaHostAddresses) {
       assert kafkaHostAddresses != null && !kafkaHostAddresses.isEmpty() : "kafkaHostAddresses must be a non-empty string";
 
-      LOGGER.info("consuming inbound messages for Kafka topic " + BLOCKCHAIN_NAME);
-      topics.add(BLOCKCHAIN_NAME);
+      LOGGER.info("consuming messages for Kafka topic " + BLOCKCHAIN_NAME_2);
+      topics.add(BLOCKCHAIN_NAME_2);
       Properties props = new Properties();
       props.put("bootstrap.servers", kafkaHostAddresses);
       props.put("group.id", KAFKA_GROUP_ID);
       props.put("key.deserializer", StringDeserializer.class.getName());
       props.put("value.deserializer", ByteArrayDeserializer.class.getName());
-
       kafkaConsumer = new KafkaConsumer<>(props);
-
     }
 
     /**
@@ -367,7 +409,7 @@ public class KafkaBlockchainDemo implements Callback {
           LOGGER.info("consumer loop poll...");
           ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
           for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
-            LOGGER.info("received consumerRecord " + consumerRecord);
+            LOGGER.info("received consumerRecord " + new Date(consumerRecord.timestamp()));
             final byte[] serializedTEObject = consumerRecord.value();
             final TEObject teObject = (TEObject) Serialization.deserialize(serializedTEObject);
             LOGGER.info("  deserialized teObject " + teObject);

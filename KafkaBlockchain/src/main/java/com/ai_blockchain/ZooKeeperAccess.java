@@ -24,7 +24,6 @@
 package com.ai_blockchain;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -49,18 +48,16 @@ public class ZooKeeperAccess {
 
   // the logger
   private static final Logger LOGGER = Logger.getLogger(ZooKeeperAccess.class);
-  // the indicator that debugging is enabled
-  private static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled();
   // the ZooKeeper interface object
   private ZooKeeper zooKeeper;
   // the latch which awaits the first connnection to the ZooKeeper server
   final CountDownLatch connectedSignal_latch = new CountDownLatch(1);
   // the ZooKeeper path for the list of Kafka broker hosts
-  public static final String ZK_KAFKA_BROKER_HOSTS = "/texai/kafka/broker/hosts";
+  public static final String ZK_KAFKA_BROKER_HOSTS = "/zk/kafka/broker/hosts";
   // the default port for ZooKeeper
   public static final int DEFAULT_PORT = 2181;
-  // the ZooKeeper path for the list of AI Blockchain containers
-  public static final String ZK_AIBLOCKCHAIN_CONTAINERS = "/aiblockchain/containers";
+  // the ZooKeeper connect string
+  public static final String ZOOKEEPER_CONNECT_STRING = "localhost:" + DEFAULT_PORT;
 
   /**
    * Constructs a new ZooKeeperAccess instance.
@@ -73,7 +70,7 @@ public class ZooKeeperAccess {
    *
    */
   public void connect() {
-    connect("zookeeper:2181");
+    connect(ZOOKEEPER_CONNECT_STRING);
   }
 
   /**
