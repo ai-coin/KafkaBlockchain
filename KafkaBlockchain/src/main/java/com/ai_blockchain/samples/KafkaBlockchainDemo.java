@@ -84,7 +84,7 @@ public class KafkaBlockchainDemo implements Callback {
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
   // the blockchain name (topic)
-  public static final String BLOCKCHAIN_NAME_2 = "kafka-demo-blockchain-2";
+  public static final String KAFKA_DEMO_BLOCKCHAIN = "kafka-demo-blockchain";
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
   // the Kafka message consumer group id
@@ -146,13 +146,13 @@ public class KafkaBlockchainDemo implements Callback {
    */
   public void produceDemoBlockchain() {
     produce(new DemoPayload("abc", 1), // payload
-            BLOCKCHAIN_NAME_2); // topic
+            KAFKA_DEMO_BLOCKCHAIN); // topic
     produce(new DemoPayload("def", 2), // payload
-            BLOCKCHAIN_NAME_2); // topic
+            KAFKA_DEMO_BLOCKCHAIN); // topic
     produce(new DemoPayload("ghi", 3), // payload
-            BLOCKCHAIN_NAME_2); // topic
+            KAFKA_DEMO_BLOCKCHAIN); // topic
     produce(new DemoPayload("jkl", 4), // payload
-            BLOCKCHAIN_NAME_2); // topic
+            KAFKA_DEMO_BLOCKCHAIN); // topic
   }
 
   /**
@@ -164,7 +164,7 @@ public class KafkaBlockchainDemo implements Callback {
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
 
     LOGGER.info("activating Kafka messaging");
-    kafkaAccess.createTopic(BLOCKCHAIN_NAME_2, // topic
+    kafkaAccess.createTopic(KAFKA_DEMO_BLOCKCHAIN, // topic
             3, // numPartitions
             (short) 1); // replicationFactor
     LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
@@ -181,7 +181,7 @@ public class KafkaBlockchainDemo implements Callback {
     kafkaConsumerLoopThread = new Thread(consumerLoop);
     kafkaConsumerLoopThread.setName("kafkaConsumer");
     kafkaConsumerLoopThread.start();
-    LOGGER.info("now consuming messages from topic " + BLOCKCHAIN_NAME_2);
+    LOGGER.info("now consuming messages from topic " + KAFKA_DEMO_BLOCKCHAIN);
 
   }
 
@@ -235,9 +235,11 @@ public class KafkaBlockchainDemo implements Callback {
       final String path = makeZooKeeperPath();
       // record the SHA256 hash for the genesis record
       final String dataString = teObject.getTEObjectHash().toString();
-      LOGGER.info("genesis hash for " + KafkaBlockchainDemo.BLOCKCHAIN_NAME_2 + "=" + dataString);
+      LOGGER.info("genesis hash for " + KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN + "=" + dataString);
       // remove prior any prior versions
-      zooKeeperAccess.deleteRecursive(path);
+      if (zooKeeperAccess.exists(path)) {
+        zooKeeperAccess.deleteRecursive(path);
+      }
       // record the first produced block as the genesis
       zooKeeperAccess.setDataString(path, dataString);
     }
@@ -306,7 +308,7 @@ public class KafkaBlockchainDemo implements Callback {
    */
   public static String makeZooKeeperPath() {
     // make a unique path for the named blockchain
-    return ZK_GENESIS_PATH_PREFIX + BLOCKCHAIN_NAME_2;
+    return ZK_GENESIS_PATH_PREFIX + KAFKA_DEMO_BLOCKCHAIN;
   }
 
   /**
@@ -371,8 +373,8 @@ public class KafkaBlockchainDemo implements Callback {
     public ConsumerLoop(final String kafkaHostAddresses) {
       assert kafkaHostAddresses != null && !kafkaHostAddresses.isEmpty() : "kafkaHostAddresses must be a non-empty string";
 
-      LOGGER.info("consuming messages for Kafka topic " + BLOCKCHAIN_NAME_2);
-      topics.add(BLOCKCHAIN_NAME_2);
+      LOGGER.info("consuming messages for Kafka topic " + KAFKA_DEMO_BLOCKCHAIN);
+      topics.add(KAFKA_DEMO_BLOCKCHAIN);
       Properties props = new Properties();
       props.put("bootstrap.servers", kafkaHostAddresses);
       props.put("group.id", KAFKA_GROUP_ID);

@@ -3,7 +3,7 @@
  *
  * Created on December 17, 2018.
  *
- * Description:  Demonstrates a tamper-evident blockchain on a stream of Kafka messages.
+ * Description:  Verifies a tamper-evident blockchain on a stream of Kafka messages. The name of the blockchain is a Kafka topic and is provided as a command line argument.
  *
  * Copyright (C) 2018 Stephen L. Reed.
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -49,6 +49,7 @@ import com.ai_blockchain.SHA256Hash;
 import com.ai_blockchain.Serialization;
 import com.ai_blockchain.TEObject;
 import com.ai_blockchain.ZooKeeperAccess;
+import static com.ai_blockchain.samples.KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +79,8 @@ public class KafkaBlockchainDemoVerification {
   private final ZooKeeperAccess zooKeeperAccess;
   // the indicator whether the first (genesis) blockchain record is being consumed
   private boolean isBlockchainGenesis = true;
+  // the blockchain name, which is a Kafka topic
+  private static String blockchainName;
 
   /**
    * Constructs a new KafkaBlockchainDemoVerification instance.
@@ -94,6 +97,14 @@ public class KafkaBlockchainDemoVerification {
    * @param args the command line arguments (unused)
    */
   public static void main(final String[] args) {
+    if (args != null && args.length > 0 && args[0] != null) {
+      blockchainName = args[0].trim();
+      LOGGER.info("Verfying the specified Kafka blockchain named " + blockchainName);
+    } else {
+      blockchainName = KAFKA_DEMO_BLOCKCHAIN;
+      LOGGER.info("Verfying the default Kafka blockchain named " + blockchainName);
+    }
+    
     final KafkaBlockchainDemoVerification kafkaBlockchainDemoVerification = new KafkaBlockchainDemoVerification();
     kafkaBlockchainDemoVerification.verifyDemoBlockchain();
     kafkaBlockchainDemoVerification.finalization();
@@ -111,8 +122,6 @@ public class KafkaBlockchainDemoVerification {
    */
   public void verifyDemoBlockchain() {
 
-    boolean isOK = true;
-
     // list Kafka topics as evidence that the Kafka broker is responsive
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
     LOGGER.info("Kafka topics " + kafkaAccess.listTopics());
@@ -121,22 +130,22 @@ public class KafkaBlockchainDemoVerification {
     // get the genesis hash for this blockchain from ZooKeeper
     final String path = KafkaBlockchainDemo.makeZooKeeperPath();
     final String sha256HashString = zooKeeperAccess.getDataString(path);
-    LOGGER.info("genesis hash for " + KafkaBlockchainDemo.BLOCKCHAIN_NAME_2 + "=" + sha256HashString);
+    LOGGER.info("genesis hash for " + blockchainName + "=" + sha256HashString);
     if (sha256HashString == null) {
-      LOGGER.warn("no genesis hash found for the blockchain named " + KafkaBlockchainDemo.BLOCKCHAIN_NAME_2);
+      LOGGER.warn("no genesis hash found for the blockchain named " + blockchainName);
       return;
     }
     final SHA256Hash genesisSHA256Hash = new SHA256Hash(sha256HashString);
     TEObject previousTEObject = null;
 
-    LOGGER.info("now consuming messages from topic " + KafkaBlockchainDemo.BLOCKCHAIN_NAME_2);
+    LOGGER.info("now consuming messages from topic " + blockchainName);
 
     // the Kafka consumer
     KafkaConsumer<String, byte[]> kafkaConsumer;
     // the topics, which has only one topic, which is the the test blockchain name
     final List<String> topics = new ArrayList<>();
 
-    topics.add(KafkaBlockchainDemo.BLOCKCHAIN_NAME_2);
+    topics.add(blockchainName);
     Properties props = new Properties();
     props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
     props.put("group.id", KAFKA_GROUP_ID);
@@ -159,9 +168,8 @@ public class KafkaBlockchainDemoVerification {
       // The consumer receives the bytes from deserializing the received JSON message, then
       // deserializes the TEObject, which contains the Message object.
       LOGGER.info("consumer loop poll...");
-      KafkaUtils.seekToBeginning(
-              kafkaConsumer,
-              KafkaBlockchainDemo.BLOCKCHAIN_NAME_2); // topic
+      KafkaUtils.seekToBeginning(kafkaConsumer,
+              blockchainName); // topic
       ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
       for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
         LOGGER.info("received consumerRecord " + consumerRecord);
@@ -175,11 +183,9 @@ public class KafkaBlockchainDemoVerification {
           // verify that this genesis tamper-evident object hashes as expected
           isBlockchainGenesis = false;
           if (!teObject.isValid()) {
-            isOK = false;
             LOGGER.info("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
             break;
           } else if (!teObject.getTEObjectHash().equals(genesisSHA256Hash)) {
-            isOK = false;
             LOGGER.info("The SHA-256 hash of for the first blockchain record does not match the stored value " + teObject);
             break;
           }
@@ -187,7 +193,6 @@ public class KafkaBlockchainDemoVerification {
         } else {
           // verify that this tamper-evident record is a valid successor to the previous one
           if (!teObject.isValidSuccessor(previousTEObject)) {
-            isOK = false;
             LOGGER.info("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
             break;
           }

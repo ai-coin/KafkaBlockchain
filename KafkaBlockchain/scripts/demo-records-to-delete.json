@@ -1,7 +1,7 @@
 {  
    "partitions":[  
       {  
-         "topic":"kafka-demo-blockchain-2",
+         "topic":"kafka-demo-blockchain",
          "partition":0,
          "offset":-1
       }
