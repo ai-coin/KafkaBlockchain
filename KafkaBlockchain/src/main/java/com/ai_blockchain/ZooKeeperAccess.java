@@ -287,8 +287,8 @@ public class ZooKeeperAccess {
    * <p>
    * A KeeperException with error code KeeperException.NoNode will be thrown if no node with the given path exists.
    *
-   * @param path
-   * @param watch
+   * @param path the path
+   * @param watch the indicator to set a watch
    * @return an unordered array of children of the node with the given path
    */
   public List<String> getChildren(

@@ -235,7 +235,7 @@ public class KafkaBlockchainDemo implements Callback {
     if (isBlockchainGenesis) {
       isBlockchainGenesis = false;
       // make a unique path for the named blockchain
-      final String path = makeZooKeeperPath();
+      final String path = ZK_GENESIS_PATH_PREFIX + KAFKA_DEMO_BLOCKCHAIN;
       // record the SHA256 hash for the genesis record
       final String dataString = teObject.getTEObjectHash().toString();
       LOGGER.info("genesis hash for " + KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN + "=" + dataString);
@@ -302,16 +302,6 @@ public class KafkaBlockchainDemo implements Callback {
    */
   @Override
   public void onCompletion(final RecordMetadata metadata, final Exception exception) {
-  }
-
-  /**
-   * Makes a ZooKeeper path to store the genesis hash for the demo blockchain.
-   *
-   * @return a ZooKeeper path
-   */
-  public static String makeZooKeeperPath() {
-    // make a unique path for the named blockchain
-    return ZK_GENESIS_PATH_PREFIX + KAFKA_DEMO_BLOCKCHAIN;
   }
 
   /**

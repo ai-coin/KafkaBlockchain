@@ -3,12 +3,10 @@
 # * runs the KafkaBlockchainDemo program, with assertions disabled
 # ****************************************************************************
 
-echo describing partitions for the Kafka group benchmark-blockchain-consumers
-${HOME}/kafka_2.11-2.1.0/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group benchmark-blockchain-consumers --describe
+#mvn "-Dexec.args=-da -classpath %classpath com.ai_blockchain.samples.KafkaBlockchainBenchmark" -Dexec.executable=java -Dexec.classpathScope=runtime org.codehaus.mojo:exec-maven-plugin:1.5.0:exec
 
-echo reset the partitions for the benchmark-blockchain-consumers group
-${HOME}/kafka_2.11-2.1.0/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group benchmark-blockchain-consumers --topic kafka-benchmark-blockchain --reset-offsets --to-earliest --execute
 
-mvn "-Dexec.args=-da -classpath %classpath com.ai_blockchain.samples.KafkaBlockchainBenchmark" -Dexec.executable=java -Dexec.classpathScope=runtime org.codehaus.mojo:exec-maven-plugin:1.5.0:exec
+echo demonstrate verifying messages from the Kafka blockchain named kafka-benchmark-blockchain
+mvn "-Dexec.args=-classpath %classpath com.ai_blockchain.samples.KafkaBlockchainDemoVerification kafka-benchmark-blockchain -quiet" -Dexec.executable=java -Dexec.classpathScope=runtime org.codehaus.mojo:exec-maven-plugin:1.5.0:exec
 
 

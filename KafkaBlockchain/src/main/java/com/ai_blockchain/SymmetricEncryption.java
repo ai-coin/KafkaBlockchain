@@ -72,7 +72,7 @@ public class SymmetricEncryption {
    *
    * @param plaintextBytes the plaintext (not encoded) bytes
    * @return the encoded ciphertext
-   * @throws java.security.GeneralSecurityException
+   * @throws java.security.GeneralSecurityException when an exception occurs
    */
   public byte[] encode(byte[] plaintextBytes) throws GeneralSecurityException {
     //Preconditions
@@ -125,7 +125,7 @@ public class SymmetricEncryption {
    *
    * @param ciphertextBytes the encoded bytes
    * @return the plaintext bytes
-   * @throws java.security.GeneralSecurityException
+   * @throws java.security.GeneralSecurityException when an exception occurs
    */
   public byte[] decode(final byte[] ciphertextBytes) throws GeneralSecurityException {
     //Preconditions

@@ -58,7 +58,7 @@ public class KafkaBlockchainVerifier {
    * Verify the given blockchains.
    *
    * @param blockchainNames the collection of blockchain names
-   * @return the verification results dictionary, blockchain name --> results array, result1 is zero if OK, otherwise 100 and result2 is the error message string
+   * @return the verification results dictionary, blockchain name to results array, result1 is zero if OK, otherwise 100 and result2 is the error message string
    *
    */
   public Map<String, Object[]> verifyKafkaBlockchain(final Collection<String> blockchainNames) {

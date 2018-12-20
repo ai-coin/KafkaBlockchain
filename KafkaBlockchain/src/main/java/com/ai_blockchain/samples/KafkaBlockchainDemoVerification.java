@@ -61,6 +61,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -99,13 +100,18 @@ public class KafkaBlockchainDemoVerification {
    * @param args the command line arguments (unused)
    */
   public static void main(final String[] args) {
-    if (args != null && args.length > 0 && args[0] != null) {
-      blockchainName = args[0].trim();
-      LOGGER.info("Verfying the specified Kafka blockchain named " + blockchainName);
-    } else {
-      blockchainName = KAFKA_DEMO_BLOCKCHAIN;
-      LOGGER.info("Verfying the default Kafka blockchain named " + blockchainName);
-    }
+//    if (args != null && args.length > 0 && args[0] != null) {
+//      blockchainName = args[0].trim();
+//      LOGGER.info("Verfying the specified Kafka blockchain named " + blockchainName);
+//    } else {
+//      blockchainName = KAFKA_DEMO_BLOCKCHAIN;
+//      LOGGER.info("Verfying the default Kafka blockchain named " + blockchainName);
+//    }
+//    if (args != null && args.length > 1 && "-quiet".equals(args[1])) {
+//      Logger.getLogger(KafkaBlockchainDemoVerification.class).setLevel(Level.WARN);
+//    }
+    blockchainName = "kafka-benchmark-blockchain";
+    Logger.getLogger(KafkaBlockchainDemoVerification.class).setLevel(Level.WARN);
 
     final KafkaBlockchainDemoVerification kafkaBlockchainDemoVerification = new KafkaBlockchainDemoVerification();
     kafkaBlockchainDemoVerification.verifyDemoBlockchain();
@@ -130,9 +136,9 @@ public class KafkaBlockchainDemoVerification {
     kafkaAccess.close();
 
     // get the genesis hash for this blockchain from ZooKeeper
-    final String path = makeZooKeeperPath();
+    final String path = ZK_GENESIS_PATH_PREFIX + blockchainName;
     final String sha256HashString = zooKeeperAccess.getDataString(path);
-    LOGGER.info("genesis hash for path " + path + " = " + sha256HashString);
+    LOGGER.warn("genesis hash for path " + path + " = " + sha256HashString);
     if (sha256HashString == null) {
       LOGGER.warn("no genesis hash found for the blockchain named " + blockchainName);
       return;
@@ -140,7 +146,7 @@ public class KafkaBlockchainDemoVerification {
     final SHA256Hash genesisSHA256Hash = new SHA256Hash(sha256HashString);
     TEObject previousTEObject = null;
 
-    LOGGER.info("now consuming messages from topic " + blockchainName);
+    LOGGER.warn("now consuming messages from topic " + blockchainName);
 
     // the Kafka consumer
     KafkaConsumer<String, byte[]> kafkaConsumer;
@@ -171,39 +177,53 @@ public class KafkaBlockchainDemoVerification {
       // deserializes the TEObject, which contains the Message object.
       LOGGER.info("consumer loop poll...");
       KafkaUtils.seekToBeginning(kafkaConsumer, blockchainName); // topic
-      ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
-      for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
-        LOGGER.info("received consumerRecord " + consumerRecord);
-        final byte[] serializedTEObject = consumerRecord.value();
-        final TEObject teObject = (TEObject) Serialization.deserialize(serializedTEObject);
-        LOGGER.info("  deserialized teObject " + teObject);
-        Serializable payload = teObject.getPayload();
-        LOGGER.info("  payload: " + payload);
+      int recordCnt = 0;
+      boolean isStillRunning = true;
+      while (isStillRunning) {
 
-        if (isBlockchainGenesis) {
-          // verify that this genesis tamper-evident object hashes as expected
-          isBlockchainGenesis = false;
-          if (!teObject.isValid()) {
-            LOGGER.info("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
-            break;
-          } else if (!teObject.getTEObjectHash().equals(genesisSHA256Hash)) {
-            LOGGER.warn("The SHA-256 hash of for the first blockchain record does not match the stored value " + teObject);
-            LOGGER.warn("  stored SHA-256 hash       = " + genesisSHA256Hash.toString());
-            LOGGER.warn("  first record SHA-256 hash = " + teObject.getTEObjectHash().toString());
-            break;
-          }
-          LOGGER.info("  the genesis record verifies with the expected SHA-256 hash");
-        } else {
-          // verify that this tamper-evident record is a valid successor to the previous one
-          if (!teObject.isValidSuccessor(previousTEObject)) {
-            LOGGER.info("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
-            break;
-          }
-          LOGGER.info("  this record is a valid successor in the " + blockchainName + " blockchain ");
+        ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
+        if (consumerRecords.isEmpty()) {
+          LOGGER.warn("...end of consumed records");
+          isStillRunning = false;
+          break;
         }
-        previousTEObject = teObject;
-      }
+        for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
+          if (++recordCnt % 100000 == 0) {
+            LOGGER.warn("verified " + recordCnt);
+          }
+          LOGGER.info("received consumerRecord " + consumerRecord);
+          final byte[] serializedTEObject = consumerRecord.value();
+          final TEObject teObject = (TEObject) Serialization.deserialize(serializedTEObject);
+          LOGGER.info("  deserialized teObject " + teObject);
+          Serializable payload = teObject.getPayload();
+          LOGGER.info("  payload: " + payload);
 
+          if (isBlockchainGenesis) {
+            // verify that this genesis tamper-evident object hashes as expected
+            isBlockchainGenesis = false;
+            if (!teObject.isValid()) {
+              LOGGER.warn("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
+              isStillRunning = false;
+              break;
+            } else if (!teObject.getTEObjectHash().equals(genesisSHA256Hash)) {
+              LOGGER.warn("The SHA-256 hash of for the first blockchain record does not match the stored value " + teObject);
+              LOGGER.warn("  stored SHA-256 hash       = " + genesisSHA256Hash.toString());
+              LOGGER.warn("  first record SHA-256 hash = " + teObject.getTEObjectHash().toString());
+              break;
+            }
+            LOGGER.info("  the genesis record verifies with the expected SHA-256 hash");
+          } else {
+            // verify that this tamper-evident record is a valid successor to the previous one
+            if (!teObject.isValidSuccessor(previousTEObject)) {
+              LOGGER.warn("The tamper-evident object is not a valid successor " + teObject + " in the " + blockchainName + " blockchain");
+              isStillRunning = false;
+              break;
+            }
+            LOGGER.info("  this record is a valid successor in the " + blockchainName + " blockchain ");
+          }
+          previousTEObject = teObject;
+        }
+      }
     } catch (WakeupException e) {
       // ignore for shutdown
     } finally {
@@ -214,15 +234,5 @@ public class KafkaBlockchainDemoVerification {
               1, // timeout
               TimeUnit.SECONDS);
     }
-  }
-
-  /**
-   * Makes a ZooKeeper path to store the genesis hash for the demo blockchain.
-   *
-   * @return a ZooKeeper path
-   */
-  public static String makeZooKeeperPath() {
-    // make a unique path for the named blockchain
-    return ZK_GENESIS_PATH_PREFIX + blockchainName;
   }
 }
