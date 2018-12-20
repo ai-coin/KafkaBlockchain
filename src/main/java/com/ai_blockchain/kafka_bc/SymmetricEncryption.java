@@ -27,7 +27,7 @@
  * limitations under the License.
  *
  */
-package com.ai_blockchain;
+package com.ai_blockchain.kafka_bc;
 
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;

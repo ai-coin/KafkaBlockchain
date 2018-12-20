@@ -15,8 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ai_blockchain;
+package com.ai_blockchain.kafka_bc;
 
+import com.ai_blockchain.kafka_bc.KafkaProperties;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;

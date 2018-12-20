@@ -41,14 +41,15 @@
  *
  * Compare with a python blockchain implementation: https://hackernoon.com/a-blockchain-experiment-with-apache-kafka-97ee0ab6aefc
  */
-package com.ai_blockchain.samples;
+package com.ai_blockchain.kafka_bc.samples;
 
-import com.ai_blockchain.KafkaAccess;
-import com.ai_blockchain.KafkaUtils;
-import com.ai_blockchain.SHA256Hash;
-import com.ai_blockchain.Serialization;
-import com.ai_blockchain.TEObject;
-import com.ai_blockchain.ZooKeeperAccess;
+import com.ai_blockchain.kafka_bc.KafkaAccess;
+import com.ai_blockchain.kafka_bc.KafkaUtils;
+import com.ai_blockchain.kafka_bc.SHA256Hash;
+import com.ai_blockchain.kafka_bc.Serialization;
+import com.ai_blockchain.kafka_bc.TEObject;
+import com.ai_blockchain.kafka_bc.ZooKeeperAccess;
+import static com.ai_blockchain.kafka_bc.samples.KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -100,18 +101,16 @@ public class KafkaBlockchainDemoVerification {
    * @param args the command line arguments (unused)
    */
   public static void main(final String[] args) {
-//    if (args != null && args.length > 0 && args[0] != null) {
-//      blockchainName = args[0].trim();
-//      LOGGER.info("Verfying the specified Kafka blockchain named " + blockchainName);
-//    } else {
-//      blockchainName = KAFKA_DEMO_BLOCKCHAIN;
-//      LOGGER.info("Verfying the default Kafka blockchain named " + blockchainName);
-//    }
-//    if (args != null && args.length > 1 && "-quiet".equals(args[1])) {
-//      Logger.getLogger(KafkaBlockchainDemoVerification.class).setLevel(Level.WARN);
-//    }
-    blockchainName = "kafka-benchmark-blockchain";
-    Logger.getLogger(KafkaBlockchainDemoVerification.class).setLevel(Level.WARN);
+    if (args != null && args.length > 0 && args[0] != null) {
+      blockchainName = args[0].trim();
+      LOGGER.info("Verifying the specified Kafka blockchain named " + blockchainName);
+    } else {
+      blockchainName = KAFKA_DEMO_BLOCKCHAIN;
+      LOGGER.info("Verifying the default Kafka blockchain named " + blockchainName);
+    }
+    if (args != null && args.length > 1 && "-quiet".equals(args[1])) {
+      Logger.getLogger(KafkaBlockchainDemoVerification.class).setLevel(Level.WARN);
+    }
 
     final KafkaBlockchainDemoVerification kafkaBlockchainDemoVerification = new KafkaBlockchainDemoVerification();
     kafkaBlockchainDemoVerification.verifyDemoBlockchain();

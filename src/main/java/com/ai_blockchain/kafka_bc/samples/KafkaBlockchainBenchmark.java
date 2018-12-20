@@ -39,14 +39,14 @@
  *
  * </code>
  */
-package com.ai_blockchain.samples;
+package com.ai_blockchain.kafka_bc.samples;
 
-import com.ai_blockchain.KafkaAccess;
-import com.ai_blockchain.KafkaBlockchainInfo;
-import com.ai_blockchain.SHA256Hash;
-import com.ai_blockchain.Serialization;
-import com.ai_blockchain.TEObject;
-import com.ai_blockchain.ZooKeeperAccess;
+import com.ai_blockchain.kafka_bc.KafkaAccess;
+import com.ai_blockchain.kafka_bc.KafkaBlockchainInfo;
+import com.ai_blockchain.kafka_bc.SHA256Hash;
+import com.ai_blockchain.kafka_bc.Serialization;
+import com.ai_blockchain.kafka_bc.TEObject;
+import com.ai_blockchain.kafka_bc.ZooKeeperAccess;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Properties;
@@ -191,7 +191,7 @@ public class KafkaBlockchainBenchmark implements Callback {
       final String path = ZK_GENESIS_PATH_PREFIX + BLOCKCHAIN_NAME;
       // record the SHA256 hash for the genesis record
       final String dataString = teObject.getTEObjectHash().toString();
-      LOGGER.info("genesis hash for " + KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN + "=" + dataString);
+      LOGGER.info("genesis hash for " + BLOCKCHAIN_NAME + "=" + dataString);
       // remove prior any prior versions
       if (zooKeeperAccess.exists(path)) {
         zooKeeperAccess.deleteRecursive(path);
