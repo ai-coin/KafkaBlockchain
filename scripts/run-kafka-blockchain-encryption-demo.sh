@@ -1,6 +1,6 @@
 #!/bin/sh
 # ****************************************************************************
-# * runs the KafkaBlockchainEncryptionDemo program.
+# * runs the demonstration for an encrypted Kafka blockchain
 # ****************************************************************************
 
 echo demonstrate putting encrypted messages into a Kafka blockchain named kafka-demo-blockchain

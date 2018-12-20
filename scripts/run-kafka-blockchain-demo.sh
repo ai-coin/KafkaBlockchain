@@ -4,7 +4,6 @@
 # If the following error occurs, the Kafka instance is not yet initialized and this script should run OK the second time
 #     Error: Executing consumer group command failed due to org.apache.kafka.common.errors.CoordinatorNotAvailableException: The coordinator is not available.
 #     java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.CoordinatorNotAvailableException: The coordinator is not available.
-# 
 # ****************************************************************************
 
 echo demonstrate putting messages into a Kafka blockchain named kafka-demo-blockchain

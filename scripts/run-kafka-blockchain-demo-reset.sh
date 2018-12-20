@@ -1,7 +1,6 @@
 #!/bin/sh
 # **********************************************************************************
 # deletes the existing demo Kafka blockchain so that the demonstration can be rerun.
-# 
 # **********************************************************************************
 
 echo describing existing partitions for the Kafka group demo-blockchain-consumers

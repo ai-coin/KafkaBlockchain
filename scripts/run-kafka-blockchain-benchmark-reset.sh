@@ -1,7 +1,6 @@
 #!/bin/sh
 # ****************************************************************************************
 # deletes the existing demo benchmark Kafka blockchain so that the benchmark can be rerun.
-# 
 # ****************************************************************************************
 
 echo delete previous records for the kafka-benchmark-blockchain 
