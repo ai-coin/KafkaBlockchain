@@ -27,31 +27,31 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  
  **Kafka blockchain demonstration**
  
- Navigate to this project's scripts directory, and launch this script in a third terminal session which runs the KafkaBlockchain demo.
- > ./run-kafka-blockchain-demo.sh
+ Navigate to this project's directory, and launch this script in a third terminal session which runs the KafkaBlockchain demo.
+ > scripts/run-kafka-blockchain-demo.sh
  
  The first program produces four payloads on the blockchain and then consumes them. A second program verifies the whole blockchain. Before re-running this demonstration, remove the previous blockchain messages by running this script first.
  
- > ./run-kafka-blockchain-demo-reset.sh
+ > scripts/run-kafka-blockchain-demo-reset.sh
  
 **Kafka encrypted blockchain demonstration**
  
- Navigate to this project's scripts directory, and launch this script in the third terminal session which runs the KafkaBlockchain encryption demo.
- > ./run-kafka-blockchain-encryption-demo.sh
+ Navigate to this project's directory, and launch this script in the third terminal session which runs the KafkaBlockchain encryption demo.
+ > scripts/run-kafka-blockchain-encryption-demo.sh
  
  The program produces four encrypted payloads on the blockchain and then consumes them with decryption. A second program verifies the whole blockchain without needing to decrypt it. Before re-running this demonstration, remove the previous blockchain messages by running this script first.
  
- > ./run-kafka-blockchain-encryption-demo-reset.sh
+ > scripts/run-kafka-blockchain-encryption-demo-reset.sh
  
 **Kafka blockchain benchmark**
  
- Navigate to this project's scripts directory, and launch this script in the third terminal session which runs the KafkaBlockchain benchmark. The producer creates 10 million messages for the Kafka blockchain. A second program reads the 10 million messages and verifies the correctness of the blockchain. The benchark takes a couple of minutes to create the messages and about five minutes more to verify the integrity of the 10 million messages.
+ Navigate to this project's directory, and launch this script in the third terminal session which runs the KafkaBlockchain benchmark. The producer creates 10 million messages for the Kafka blockchain. A second program reads the 10 million messages and verifies the correctness of the blockchain. The benchark takes a couple of minutes to create the messages and about five minutes more to verify the integrity of the 10 million messages.
  
- > ./run-kafka-blockchain-benchmark.sh
+ > scripts/run-kafka-blockchain-benchmark.sh
  
   Before re-running this benchmark, remove the previous 10 million blockchain messages by running this script first.
  
- > ./run-kafka-blockchain-benchmark-reset.sh
+ > scripts/run-kafka-blockchain-benchmark-reset.sh
  
  **shutdown**
  
