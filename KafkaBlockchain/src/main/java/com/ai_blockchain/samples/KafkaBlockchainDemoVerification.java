@@ -49,8 +49,8 @@ import com.ai_blockchain.SHA256Hash;
 import com.ai_blockchain.Serialization;
 import com.ai_blockchain.TEObject;
 import com.ai_blockchain.ZooKeeperAccess;
-import static com.ai_blockchain.samples.KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -181,7 +181,7 @@ public class KafkaBlockchainDemoVerification {
       boolean isStillRunning = true;
       while (isStillRunning) {
 
-        ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
+        ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1)); // timeout
         if (consumerRecords.isEmpty()) {
           LOGGER.warn("...end of consumed records");
           isStillRunning = false;

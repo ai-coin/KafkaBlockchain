@@ -51,6 +51,7 @@ import com.ai_blockchain.Serialization;
 import com.ai_blockchain.TEObject;
 import com.ai_blockchain.ZooKeeperAccess;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -402,7 +403,7 @@ public class KafkaBlockchainDemo implements Callback {
           // The consumer receives the bytes from deserializing the received JSON message, then
           // deserializes the TEObject, which contains the Message object.
           LOGGER.info("consumer loop poll...");
-          ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
+          ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1)); // timeout
           for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
             LOGGER.info("received consumerRecord " + new Date(consumerRecord.timestamp()));
             final byte[] serializedTEObject = consumerRecord.value();
