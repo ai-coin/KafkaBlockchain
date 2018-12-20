@@ -106,8 +106,8 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
   // the indicator whether the first (genesis) blockchain record is being produced, in which case the hash and blockchain name are persisted 
   // in ZooKeeper for this demonstration - and for production would be stored in a secret-keeping facility.
   private boolean isBlockchainGenesis = true;
-  // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/demo-encryption-blockchain-genesis-<blockchain name>
-  public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/demo-encryption-blockchain-genesis-";
+  // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/kafka-demo-encryption-blockchain
+  public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
 
   /**
    * Constructs a new KafkaBlockchainEncryptionDemo instance.
@@ -188,8 +188,11 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
 
     LOGGER.info("activating Kafka messaging");
+    /**
+     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
+     */
     kafkaAccess.createTopic(KAFKA_DEMO_ENCRYPTION_BLOCKCHAIN, // topic
-            3, // numPartitions
+            1, // numPartitions
             (short) 1); // replicationFactor
     LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
 
@@ -242,6 +245,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
         } else {
           LOGGER.info("retrieved previousTEObjectHash: " + kafkaBlockchainInfo);
         }
+        blockchainHashDictionary.put(topic, kafkaBlockchainInfo);
       } else {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("cached previousTEObjectHash: " + kafkaBlockchainInfo);
@@ -269,7 +273,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
       final String path = makeZooKeeperPath();
       // record the SHA256 hash for the genesis record
       final String dataString = teObject.getTEObjectHash().toString();
-      LOGGER.info("genesis hash for " + KafkaBlockchainDemo.KAFKA_DEMO_BLOCKCHAIN + "=" + dataString);
+      LOGGER.info("genesis hash for path " + path + " = " + dataString);
       // remove prior any prior versions
       if (zooKeeperAccess.exists(path)) {
         zooKeeperAccess.deleteRecursive(path);

@@ -101,8 +101,8 @@ public class KafkaBlockchainDemo implements Callback {
   // the indicator whether the first (genesis) blockchain record is being produced, in which case the hash and blockchain name are persisted 
   // in ZooKeeper for this demonstration - and for production would be stored in a secret-keeping facility.
   private boolean isBlockchainGenesis = true;
-  // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/demo-blockchain-genesis-<blockchain name>
-  public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/demo-blockchain-genesis-";
+  // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/kafka-demo-blockchain
+  public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
 
   /**
    * Constructs a new KafkaBlockchainDemo instance.
@@ -164,8 +164,11 @@ public class KafkaBlockchainDemo implements Callback {
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
 
     LOGGER.info("activating Kafka messaging");
+    /**
+     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
+     */
     kafkaAccess.createTopic(KAFKA_DEMO_BLOCKCHAIN, // topic
-            3, // numPartitions
+            1, // numPartitions
             (short) 1); // replicationFactor
     LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
     kafkaAccess.close();

@@ -81,6 +81,8 @@ public class KafkaBlockchainDemoVerification {
   private boolean isBlockchainGenesis = true;
   // the blockchain name, which is a Kafka topic
   private static String blockchainName;
+  // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/<blockchain name>
+  public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
 
   /**
    * Constructs a new KafkaBlockchainDemoVerification instance.
@@ -104,7 +106,7 @@ public class KafkaBlockchainDemoVerification {
       blockchainName = KAFKA_DEMO_BLOCKCHAIN;
       LOGGER.info("Verfying the default Kafka blockchain named " + blockchainName);
     }
-    
+
     final KafkaBlockchainDemoVerification kafkaBlockchainDemoVerification = new KafkaBlockchainDemoVerification();
     kafkaBlockchainDemoVerification.verifyDemoBlockchain();
     kafkaBlockchainDemoVerification.finalization();
@@ -128,9 +130,9 @@ public class KafkaBlockchainDemoVerification {
     kafkaAccess.close();
 
     // get the genesis hash for this blockchain from ZooKeeper
-    final String path = KafkaBlockchainDemo.makeZooKeeperPath();
+    final String path = makeZooKeeperPath();
     final String sha256HashString = zooKeeperAccess.getDataString(path);
-    LOGGER.info("genesis hash for " + blockchainName + "=" + sha256HashString);
+    LOGGER.info("genesis hash for path " + path + " = " + sha256HashString);
     if (sha256HashString == null) {
       LOGGER.warn("no genesis hash found for the blockchain named " + blockchainName);
       return;
@@ -168,8 +170,7 @@ public class KafkaBlockchainDemoVerification {
       // The consumer receives the bytes from deserializing the received JSON message, then
       // deserializes the TEObject, which contains the Message object.
       LOGGER.info("consumer loop poll...");
-      KafkaUtils.seekToBeginning(kafkaConsumer,
-              blockchainName); // topic
+      KafkaUtils.seekToBeginning(kafkaConsumer, blockchainName); // topic
       ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Long.MAX_VALUE); // timeout
       for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
         LOGGER.info("received consumerRecord " + consumerRecord);
@@ -186,7 +187,9 @@ public class KafkaBlockchainDemoVerification {
             LOGGER.info("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
             break;
           } else if (!teObject.getTEObjectHash().equals(genesisSHA256Hash)) {
-            LOGGER.info("The SHA-256 hash of for the first blockchain record does not match the stored value " + teObject);
+            LOGGER.warn("The SHA-256 hash of for the first blockchain record does not match the stored value " + teObject);
+            LOGGER.warn("  stored SHA-256 hash       = " + genesisSHA256Hash.toString());
+            LOGGER.warn("  first record SHA-256 hash = " + teObject.getTEObjectHash().toString());
             break;
           }
           LOGGER.info("  the genesis record verifies with the expected SHA-256 hash");
@@ -196,8 +199,8 @@ public class KafkaBlockchainDemoVerification {
             LOGGER.info("The SHA-256 hash calculation is wrong for the first blockchain record " + teObject);
             break;
           }
-           LOGGER.info("  the record verifies with the blockchain");
-       }
+          LOGGER.info("  this record is a valid successor in the " + blockchainName + " blockchain ");
+        }
         previousTEObject = teObject;
       }
 
@@ -213,4 +216,13 @@ public class KafkaBlockchainDemoVerification {
     }
   }
 
+  /**
+   * Makes a ZooKeeper path to store the genesis hash for the demo blockchain.
+   *
+   * @return a ZooKeeper path
+   */
+  public static String makeZooKeeperPath() {
+    // make a unique path for the named blockchain
+    return ZK_GENESIS_PATH_PREFIX + blockchainName;
+  }
 }
