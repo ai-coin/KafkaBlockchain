@@ -369,7 +369,7 @@ public class KafkaBlockchainDemo implements Callback {
 
       LOGGER.info("consuming messages for Kafka topic " + KAFKA_DEMO_BLOCKCHAIN);
       topics.add(KAFKA_DEMO_BLOCKCHAIN);
-      Properties props = new Properties();
+      final Properties props = new Properties();
       props.put("bootstrap.servers", kafkaHostAddresses);
       props.put("group.id", KAFKA_GROUP_ID);
       props.put("key.deserializer", StringDeserializer.class.getName());

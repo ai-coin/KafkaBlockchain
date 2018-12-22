@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"com.ai_blockchain"},{"l":"com.ai_blockchain.samples"}]
+packageSearchIndex = [{"l":"com.ai_blockchain.kafka_bc"},{"l":"com.ai_blockchain.kafka_bc.samples"}]

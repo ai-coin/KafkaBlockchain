@@ -26,6 +26,7 @@ package com.ai_blockchain.kafka_bc;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +45,45 @@ public class KafkaUtils {
    * Prevents the construction of this utility class having only static methods.
    */
   private KafkaUtils() {
+  }
+
+  /**
+   * Gets the topic partitions for the given topic.
+   *
+   * @param topic the topic (blockchain name)
+   * @param consumerProperties the Kafka consumer properties
+   * @return the topic partitions for the given topic
+   */
+  public static List<TopicPartition>  getNbrPartitionsForTopic(
+          final String topic,
+          final Properties consumerProperties) {
+    //Preconditions
+    assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    assert consumerProperties != null : "consumerProperties must not be null";
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("getNbrPartitionsForTopic, topic: " + topic);
+    }
+    final KafkaConsumer kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+    LOGGER.info("getNbrPartitionsForTopic, topic: " + topic);
+
+    final Collection<String> topics = new ArrayList<>();
+    topics.add(topic);
+    // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
+    kafkaConsumer.subscribe(topics);
+    kafkaConsumer.poll(100); // timeout
+    // get the assigned partitions for this topic, which for this application will be every partition for the topic
+    final List<TopicPartition> assignedTopicPartitions = new ArrayList<>();
+    assignedTopicPartitions.addAll(kafkaConsumer.assignment());
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("assignedTopicPartitions: " + assignedTopicPartitions);
+    }
+    kafkaConsumer.unsubscribe();
+    kafkaConsumer.close(
+            10, // timeout
+            TimeUnit.SECONDS);
+    return assignedTopicPartitions;
   }
 
   /**
@@ -151,7 +191,7 @@ public class KafkaUtils {
     }
     return kafkaBlockchainInfo;
   }
-  
+
   /**
    * Positions the given KafkaConsumer at the beginning of its partitions for the given topic.
    *
@@ -166,7 +206,7 @@ public class KafkaUtils {
     assert kafkaConsumer != null : "kafkaConsumer must not be null";
 
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("getKafkaTopicInfo, containerName: " + topic);
+      LOGGER.debug("getKafkaTopicInfo, topic: " + topic);
     }
 
     final Collection<String> topics = new ArrayList<>();
@@ -174,7 +214,7 @@ public class KafkaUtils {
     // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
     kafkaConsumer.subscribe(topics);
     kafkaConsumer.poll(100); // timeout
-    // get the assigned partitions for this topic, which for this application will be every partition for the topic
+    // get the assigned partitions for this topic, which may not be all of them if there are other consumers existing in the group
     final Collection<TopicPartition> assignedTopicPartitions = kafkaConsumer.assignment();
 
     if (LOGGER.isDebugEnabled()) {

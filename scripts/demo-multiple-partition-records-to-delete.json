@@ -1,0 +1,30 @@
+{  
+   "partitions":[  
+      {  
+         "topic":"kafka-demo-multiple-partition-blockchain",
+         "partition":0,
+         "offset":-1
+      },
+      {  
+         "topic":"kafka-demo-multiple-partition-blockchain",
+         "partition":1,
+         "offset":-1
+      },
+      {  
+         "topic":"kafka-demo-multiple-partition-blockchain",
+         "partition":2,
+         "offset":-1
+      },
+      {  
+         "topic":"kafka-demo-multiple-partition-blockchain",
+         "partition":3,
+         "offset":-1
+      },
+      {  
+         "topic":"kafka-demo-multiple-partition-blockchain",
+         "partition":4,
+         "offset":-1
+      }
+   ],
+   "version":1
+}
