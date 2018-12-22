@@ -87,7 +87,7 @@ public class KafkaUtils {
   }
 
   /**
-   * Gets the previous blockchain tip hash and serial number from Kafka, for the given remote container name
+   * Gets the previous blockchain tip hash and serial number from Kafka, for the given topic.
    *
    * @param topic the topic (blockchain name)
    * @param consumerProperties the Kafka consumer properties
