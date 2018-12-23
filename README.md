@@ -54,7 +54,7 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  
 **Kafka blockchain benchmark**
  
- Navigate to this project's directory, and launch this script in the third terminal session which runs the KafkaBlockchain benchmark. The producer creates 10 million messages for the Kafka blockchain. A second program reads the 10 million messages and verifies the correctness of the blockchain. The benchark takes a couple of minutes to create the messages and about five minutes more to verify the integrity of the 10 million messages.
+ Navigate to this project's directory, and launch this script in the third terminal session which runs the KafkaBlockchain benchmark. The producer creates 10 million messages for the Kafka blockchain. A second program reads the 10 million messages and verifies the correctness of the blockchain. The demonstration payload is efficiently serialized using tailored methods that implement Externalizable. The benchark takes a couple of minutes to create the messages and about five minutes more to verify the integrity of the 10 million messages.
  
  > scripts/run-kafka-blockchain-benchmark.sh
  
