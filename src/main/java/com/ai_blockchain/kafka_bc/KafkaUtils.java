@@ -48,13 +48,13 @@ public class KafkaUtils {
   }
 
   /**
-   * Gets the topic partitions for the given topic.
+   * Gets the topic partitions for the given topic as a list.
    *
    * @param topic the topic (blockchain name)
    * @param consumerProperties the Kafka consumer properties
    * @return the topic partitions for the given topic
    */
-  public static List<TopicPartition>  getNbrPartitionsForTopic(
+  public static List<TopicPartition>  getAssignedTopicPartitions(
           final String topic,
           final Properties consumerProperties) {
     //Preconditions
@@ -72,7 +72,7 @@ public class KafkaUtils {
     // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
     kafkaConsumer.subscribe(topics);
     kafkaConsumer.poll(100); // timeout
-    // get the assigned partitions for this topic, which for this application will be every partition for the topic
+    // get the assigned partitions for this topic
     final List<TopicPartition> assignedTopicPartitions = new ArrayList<>();
     assignedTopicPartitions.addAll(kafkaConsumer.assignment());
 

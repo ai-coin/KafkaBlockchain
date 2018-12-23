@@ -43,19 +43,28 @@ package com.ai_blockchain.kafka_bc.samples;
 
 import com.ai_blockchain.kafka_bc.KafkaAccess;
 import com.ai_blockchain.kafka_bc.KafkaBlockchainInfo;
+import com.ai_blockchain.kafka_bc.KafkaUtils;
 import com.ai_blockchain.kafka_bc.SHA256Hash;
 import com.ai_blockchain.kafka_bc.Serialization;
 import com.ai_blockchain.kafka_bc.TEObject;
 import com.ai_blockchain.kafka_bc.ZooKeeperAccess;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.log4j.Logger;
 
@@ -107,6 +116,32 @@ public class KafkaBlockchainBenchmark implements Callback {
   }
 
   /**
+   * Activate Kafka messaging, including a producer and a consumer of tamper-evident payloads.
+   */
+  public void activateKafkaMessaging() {
+
+    // list Kafka topics as evidence that the Kafka broker is responsive
+    final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
+
+    LOGGER.info("activating Kafka messaging");
+    /**
+     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
+     */
+    kafkaAccess.createTopic(
+            BLOCKCHAIN_NAME, // topic
+            3, // numPartitions
+            (short) 1); // replicationFactor
+    LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
+
+    final Properties props = new Properties();
+    props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
+    props.put("client.id", "TEKafkaProducer");
+    props.put("key.serializer", StringSerializer.class.getName());
+    props.put("value.serializer", ByteArraySerializer.class.getName());
+    kafkaProducer = new KafkaProducer<>(props);
+  }
+
+  /**
    * Closes the open resources.
    */
   public void finalization() {
@@ -123,7 +158,7 @@ public class KafkaBlockchainBenchmark implements Callback {
     final long startTimeMillis = System.currentTimeMillis();
     for (int i = 0; i < nbrIterations; i++) {
       produce(
-              new DemoPayload("benchmark payload", i), // payload
+              new BenchmarkPayload("benchmark payload", i), // payload
               BLOCKCHAIN_NAME); // topic
     }
     final long durationMillis = System.currentTimeMillis() - startTimeMillis;
@@ -133,34 +168,17 @@ public class KafkaBlockchainBenchmark implements Callback {
     LOGGER.info("durationMillis      " + durationMillis);
     LOGGER.info("durationSeconds     " + durationSeconds);
     LOGGER.info("iterationsPerSecond " + iterationsPerSecond);
-  }
 
-  /**
-   * Activate Kafka messaging, including a producer and a consumer of tamper-evident payloads.
-   */
-  public void activateKafkaMessaging() {
+    final Properties consumerProperties = new Properties();
+    consumerProperties.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
+    consumerProperties.put("group.id", "kafka-benchmark-group");
+    consumerProperties.put("key.deserializer", StringDeserializer.class.getName());
+    consumerProperties.put("value.deserializer", ByteArrayDeserializer.class.getName());
 
-    // list Kafka topics as evidence that the Kafka broker is responsive
-    final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
-
-    LOGGER.info("activating Kafka messaging");
-    /**
-     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
-     */
-    kafkaAccess.createTopic(
-            BLOCKCHAIN_NAME, // topic
-            1, // numPartitions
-            (short) 3); // replicationFactor
-    LOGGER.info("  Kafka topics " + kafkaAccess.listTopics());
-
-    if (kafkaProducer == null) {
-      final Properties props = new Properties();
-      props.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
-      props.put("client.id", "TEKafkaProducer");
-      props.put("key.serializer", StringSerializer.class.getName());
-      props.put("value.serializer", ByteArraySerializer.class.getName());
-      kafkaProducer = new KafkaProducer<>(props);
-    }
+    final List<TopicPartition> assignedTopicPartitions = KafkaUtils.getAssignedTopicPartitions(
+            BLOCKCHAIN_NAME,
+            consumerProperties);
+    LOGGER.info("the blockchain named " + BLOCKCHAIN_NAME + " has " + assignedTopicPartitions.size() + " partitions");
   }
 
   /**
@@ -234,22 +252,32 @@ public class KafkaBlockchainBenchmark implements Callback {
   }
 
   /**
-   * Provides a demonstration payload for a Kafka blockchain.
+   * Provides a benchmark payload for a Kafka blockchain. It implements Externalizable as a more efficient alternative to the default implementation for
+   * Serializable which includes the class definition in the serialized output. The benchmark assumes that the tamper
    */
-  static class DemoPayload implements Serializable {
+  public static class BenchmarkPayload implements Externalizable {
+
+    // the serialization version universal identifier
+    private static final long serialVersionUID = 1L;
 
     // the demo string data
-    private final String string;
+    private String string;
     // the demo integer data
-    private final Integer integer;
+    private Integer integer;
 
     /**
-     * Constructs a new DemoPayload instance.
+     * Constructs a default BenchmarkPayload instance.
+     */
+    public BenchmarkPayload() {
+    }
+
+    /**
+     * Constructs a new BenchmarkPayload instance.
      *
      * @param string the demo string data
      * @param integer the demo integer data
      */
-    DemoPayload(
+    BenchmarkPayload(
             final String string,
             final Integer integer) {
       this.string = string;
@@ -264,12 +292,48 @@ public class KafkaBlockchainBenchmark implements Callback {
     @Override
     public String toString() {
       return new StringBuffer()
-              .append("[DemoPayload, string=")
+              .append("[BenchmarkPayload, string=")
               .append(string)
               .append(", integer=")
               .append(integer)
               .append(']')
               .toString();
+    }
+
+    /**
+     * The object implements the writeExternal method to save its contents by calling the methods of DataOutput for its primitive values or calling the
+     * writeObject method of ObjectOutput for objects, strings, and arrays.
+     *
+     * @serialData Overriding methods should use this tag to describe the data layout of this Externalizable object. List the sequence of element types and, if
+     * possible, relate the element to a public/protected field and/or method of this Externalizable class.
+     *
+     * @param objectOutput the stream to write the object to
+     * @exception IOException Includes any I/O exceptions that may occur
+     */
+    @Override
+    public void writeExternal(final ObjectOutput objectOutput) throws IOException {
+      //Preconditions
+      assert objectOutput != null : "objectOutput must not be null";
+
+      objectOutput.writeUTF(string);
+      objectOutput.writeInt(integer);
+    }
+
+    /**
+     * The object implements the readExternal method to restore its contents by calling the methods of DataInput for primitive types and readObject for objects,
+     * strings and arrays. The readExternal method must read the values in the same sequence and with the same types as were written by writeExternal.
+     *
+     * @param objectInput the stream to read data from in order to restore the object
+     * @exception IOException if I/O errors occur
+     * @exception ClassNotFoundException If the class for an object being restored cannot be found.
+     */
+    @Override
+    public void readExternal(final ObjectInput objectInput) throws IOException, ClassNotFoundException {
+      //Preconditions
+      assert objectInput != null : "objectInput must not be null";
+
+      string = objectInput.readUTF();
+      integer = objectInput.readInt();
     }
   }
 }

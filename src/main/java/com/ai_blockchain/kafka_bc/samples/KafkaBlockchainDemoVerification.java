@@ -205,7 +205,7 @@ public class KafkaBlockchainDemoVerification {
               isStillRunning = false;
               break;
             } else if (!teObject.getTEObjectHash().equals(genesisSHA256Hash)) {
-              LOGGER.warn("The SHA-256 hash of for the first blockchain record does not match the stored value " + teObject);
+              LOGGER.warn("The SHA-256 hash of the first blockchain record does not match the stored value " + teObject);
               LOGGER.warn("  stored SHA-256 hash       = " + genesisSHA256Hash.toString());
               LOGGER.warn("  first record SHA-256 hash = " + teObject.getTEObjectHash().toString());
               break;

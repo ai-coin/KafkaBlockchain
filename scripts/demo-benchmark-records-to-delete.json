@@ -4,6 +4,16 @@
          "topic":"kafka-benchmark-blockchain",
          "partition":0,
          "offset":-1
+      },
+      {  
+         "topic":"kafka-benchmark-blockchain",
+         "partition":1,
+         "offset":-1
+      },
+      {  
+         "topic":"kafka-benchmark-blockchain",
+         "partition":2,
+         "offset":-1
       }
    ],
    "version":1
