@@ -113,9 +113,6 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
       Logger.getLogger(KafkaUtils.class).setLevel(Level.WARN);
     }
 
-    Logger.getLogger(KafkaBlockchainMultiplePartitionDemoVerification.class).setLevel(Level.WARN);
-    Logger.getLogger(KafkaUtils.class).setLevel(Level.WARN);
-
     final KafkaBlockchainMultiplePartitionDemoVerification kafkaBlockchainDemoVerification = new KafkaBlockchainMultiplePartitionDemoVerification();
     kafkaBlockchainDemoVerification.verifyDemoBlockchain();
     kafkaBlockchainDemoVerification.finalization();
