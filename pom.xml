@@ -87,4 +87,11 @@
         </dependency>
     </dependencies>
 
+  <distributionManagement>
+    <repository>
+      <!-- Nexus artifact server must be the same as specified in ~/.m2/settings.xml -->
+      <id>nexus</id>
+      <url>http://52.8.248.253:8081/nexus/content/repositories/releases/</url>
+    </repository>
+  </distributionManagement>
 </project>
