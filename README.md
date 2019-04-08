@@ -1,7 +1,7 @@
 # KafkaBlockchain
 KafkaBlockchain is a java library for tamper-evidence using Kafka. Messages are optionally encrypted and hashed sequentially. The library methods are called within a Kafka application's message producer code to wrap messages, and called within the application's consumer code to unwrap messages. A sample utility program is provided that consumes and verifies a blockchained topic.
 
-Because blockchains must be strictly sequentially ordered, Kafka blockchain topics must either have a single partition, or consumers for each partition must cooperate to sequence the records. Sample programs demonstrate blockchains with a single partition and with mulitple partitions. If multiple producers exist, they must cooperate to serially add records to a Kafka blockchain.
+Because blockchains must be strictly sequentially ordered, Kafka blockchain topics must either have a single partition, or consumers for each partition must cooperate to sequence the records. Sample programs demonstrate blockchains with a single partition and with multitple partitions. If multiple producers exist, they must cooperate to serially add records to a Kafka blockchain.
 
 Kafka already implements checksums for message streams to detect data loss. However, an attacker can provide false records that have correct checksums. Cryptographic hashes such as the standard SHA-256 algorithm are very difficult to falsify, which makes them ideal for tamper-evidence despite being a bit more computation than checksums.
 
