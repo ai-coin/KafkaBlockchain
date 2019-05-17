@@ -1,3 +1,8 @@
+| Connector Version | Source Technology Version | Confluent Platorm Version |   
+| --- | --- | --- |  
+| 1.0 | Ai-BlockChain 1.0 | Compatible Confluent Platform Version - ≥5.0.X |  
+---
+
 # KafkaBlockchain
 KafkaBlockchain is a java library for tamper-evidence using Kafka. Messages are optionally encrypted and hashed sequentially. The library methods are called within a Kafka application's message producer code to wrap messages, and called within the application's consumer code to unwrap messages. A sample utility program is provided that consumes and verifies a blockchained topic.
 
