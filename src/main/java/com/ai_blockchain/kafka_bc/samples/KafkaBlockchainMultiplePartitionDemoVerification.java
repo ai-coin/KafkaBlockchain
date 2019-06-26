@@ -234,7 +234,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
         final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
         if (kafkaBlockchainPartitionConsumer.isDone
                 && kafkaBlockchainPartitionConsumer.getTeObject() == null) {
-          // the consumer exhausted its partition and the main thread has retreived the tamper evident object
+          // the consumer exhausted its partition and the main thread has retrieved the tamper evident object
         } else {
           areAllConsumersDone = false;
           break;

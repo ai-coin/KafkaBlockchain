@@ -125,7 +125,8 @@ public class KafkaBlockchainBenchmark implements Callback {
 
     LOGGER.info("activating Kafka messaging");
     /**
-     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
+     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain or 
+     * producers must cooperate for creating the blockchain.
      */
     kafkaAccess.createTopic(
             BLOCKCHAIN_NAME, // topic
@@ -182,7 +183,8 @@ public class KafkaBlockchainBenchmark implements Callback {
   }
 
   /**
-   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object to the Kafka broker.
+   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident 
+   * object to the Kafka broker.
    *
    * @param payload the given payload
    * @param topic the topic, which is the blockchain name
@@ -253,7 +255,7 @@ public class KafkaBlockchainBenchmark implements Callback {
 
   /**
    * Provides a benchmark payload for a Kafka blockchain. It implements Externalizable as a more efficient alternative to the default implementation for
-   * Serializable which includes the class definition in the serialized output. The benchmark assumes that the tamper
+   * Serializable which includes the class definition in the serialized output.
    */
   public static class BenchmarkPayload implements Externalizable {
 

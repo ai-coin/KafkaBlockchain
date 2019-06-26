@@ -168,7 +168,7 @@ public class KafkaBlockchainMultiplePartitionDemo implements Callback {
 
     LOGGER.info("activating Kafka messaging");
     /**
-     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
+     * Five partitions.
      */
     kafkaAccess.createTopic(BLOCKCHAIN_NAME, // topic
             5, // numPartitions
@@ -192,7 +192,8 @@ public class KafkaBlockchainMultiplePartitionDemo implements Callback {
   }
 
   /**
-   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object to the Kafka broker.
+   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object 
+   * to the Kafka broker.
    *
    * @param payload the given payload
    * @param topic the topic, which is the blockchain name
