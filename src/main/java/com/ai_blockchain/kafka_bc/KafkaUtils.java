@@ -54,6 +54,7 @@ public class KafkaUtils {
    * @param consumerProperties the Kafka consumer properties
    * @return the topic partitions for the given topic
    */
+  @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
   public static List<TopicPartition>  getAssignedTopicPartitions(
           final String topic,
           final Properties consumerProperties) {
@@ -94,6 +95,7 @@ public class KafkaUtils {
    *
    * @return the Kafka blockchain info, or null if not found
    */
+  @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
   public static KafkaBlockchainInfo getKafkaTopicInfo(
           final String topic,
           final Properties consumerProperties) {
@@ -198,6 +200,7 @@ public class KafkaUtils {
    * @param kafkaConsumer the given Kafka consumer
    * @param topic the topic
    */
+  @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
   public static void seekToBeginning(
           final KafkaConsumer kafkaConsumer,
           final String topic) {
