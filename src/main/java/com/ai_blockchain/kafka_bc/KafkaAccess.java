@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
@@ -68,6 +69,28 @@ public class KafkaAccess {
       LOGGER.debug("KafkaAccess known topics...");
     }
     adminClient.listTopics();
+  }
+
+  /**
+   * Returns whether Kafka is running by attempting to connect.
+   *
+   * @return whether Kafka is running
+   */
+  public static boolean isKafkaRunning() {
+    final Properties properties = new Properties();
+    properties.put("bootstrap.servers", "127.0.0.1:9092");
+    properties.put("connections.max.idle.ms", 10000);
+    properties.put("request.timeout.ms", 5000);
+    try (final AdminClient adminClient = KafkaAdminClient.create(properties)) {
+      final ListTopicsResult topics = adminClient.listTopics();
+      final Set<String> names = topics.names().get();
+      if (names.isEmpty()) {
+        // case: if no topic found.
+      }
+      return true;
+    } catch (InterruptedException | ExecutionException e) {
+      return false;
+    }
   }
 
   /**
