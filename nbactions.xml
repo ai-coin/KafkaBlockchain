@@ -50,4 +50,24 @@
                 <goal>deploy</goal>
             </goals>
         </action>
+        <action>
+            <actionName>CUSTOM-install-no-tests</actionName>
+            <displayName>install-no-tests</displayName>
+            <goals>
+                <goal>install:install</goal>
+            </goals>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </action>
+        <action>
+            <actionName>CUSTOM-install-skip-tests</actionName>
+            <displayName>install-skip-tests</displayName>
+            <goals>
+                <goal>install</goal>
+            </goals>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </action>
     </actions>
