@@ -16,6 +16,7 @@ To manage Kafka blockchains, the sample programs store the first (genesis) messa
 This library uses the Bouncy Castle crypto library.
 Apache Maven is required to build this library, and to run the quickstart examples.
 This library is written using Java 10.
+The jar file is shaded such that the dependencies are hidden from any Maven project which includes KafkaBlockchain as a dependency.
 
 **Goodies**
 Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Hash and Serialization.
