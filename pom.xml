@@ -50,6 +50,44 @@
           <argLine>-Xms200M -Xmx1G -ea</argLine>
         </configuration>
       </plugin>
+      
+      <plugin>
+        <!-- KafkaBlockchain is shaded so that its dependencies do not conflict with any Maven project having KafkaBlockchain as a dependency -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.2</version>
+        <executions>
+          <!-- Create the bundled JAR, it's easier for some people -->
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <minimizeJar>false</minimizeJar>
+              <filters>
+                <filter>
+                  <!-- exclude signatures, the bundling process breaks them for some reason -->
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>bundled</shadedClassifierName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>${project.artifactId}.Main</mainClass>
+                </transformer>
+              </transformers>
+              <outputFile>target/${project.artifactId}-shaded.jar</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -113,6 +151,7 @@
   </dependencies>
 
   <distributionManagement>
+    <!-- firewalled for developer updates only -->
     <repository>
       <!-- Nexus artifact server must be the same as specified in ~/.m2/settings.xml -->
       <id>nexus</id>
