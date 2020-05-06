@@ -58,6 +58,8 @@ public class ZooKeeperAccess {
   public static final int DEFAULT_PORT = 2181;
   // the ZooKeeper connect string
   public static final String ZOOKEEPER_CONNECT_STRING = "localhost:" + DEFAULT_PORT;
+  // the ZooKeeper connect string
+  public static final String ZOOKEEPER_IPV6_CONNECT_STRING = "ip6-localhost:" + DEFAULT_PORT;
 
   /**
    * Constructs a new ZooKeeperAccess instance.

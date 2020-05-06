@@ -25,10 +25,10 @@
  * <code>
  * This demonstration performs KafkaBlockchain operations using a test Kafka broker configured per "Kafka Quickstart" https://kafka.apache.org/quickstart .
  * Launch ZooKeeper in a terminal session
- * > cd ~/kafka_2.11-2.1.0; bin/zookeeper-server-start.sh config/zookeeper.properties
+ * > cd ~/kafka_2.12-2.5.0; bin/zookeeper-server-start.sh config/zookeeper.properties
  * 
  * Launch Kafka in a second terminal session after ZooKeeper initializes.
- * > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
+ * > cd ~/kafka_2.12-2.5.0; bin/kafka-server-start.sh config/server.properties
  *
  * Navigate to this project's directory, and launch the script in a third terminal session which runs the KafkaBlockchain demo.
  * > scripts/run-kafka-blockchain-demo.sh
@@ -72,6 +72,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -110,8 +111,10 @@ public class KafkaBlockchainDemo implements Callback {
    */
   public KafkaBlockchainDemo() {
     LOGGER.info("connecting to ZooKeeper...");
+    Logger.getLogger(ZooKeeperAccess.class).setLevel(Level.DEBUG);
     zooKeeperAccess = new ZooKeeperAccess();
-    zooKeeperAccess.connect(ZooKeeperAccess.ZOOKEEPER_CONNECT_STRING);
+    zooKeeperAccess.connect(ZooKeeperAccess.ZOOKEEPER_IPV6_CONNECT_STRING);
+//    zooKeeperAccess.connect(":::2181");
   }
 
   /**
@@ -190,7 +193,8 @@ public class KafkaBlockchainDemo implements Callback {
   }
 
   /**
-   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object to the Kafka broker.
+   * Wraps the given payload as a tamper-evident object, computes the next blockchain hash and sends the tamper-evident object to the Kafka
+   * broker.
    *
    * @param payload the given payload
    * @param topic the topic, which is the blockchain name
@@ -286,8 +290,8 @@ public class KafkaBlockchainDemo implements Callback {
   }
 
   /**
-   * A callback method the user can implement to provide asynchronous handling of request completion. This method will be called when the record sent to the
-   * server has been acknowledged. Exactly one of the arguments will be non-null.
+   * A callback method the user can implement to provide asynchronous handling of request completion. This method will be called when the
+   * record sent to the server has been acknowledged. Exactly one of the arguments will be non-null.
    *
    * @param metadata The metadata for the record that was sent (i.e. the partition and offset). Null if an error occurred.
    * @param exception The exception thrown during processing of this record. Null if no error occurred. Possible thrown exceptions include:
@@ -298,8 +302,8 @@ public class KafkaBlockchainDemo implements Callback {
    *
    * Retriable exceptions (transient, may be covered by increasing #.retries):
    *
-   * CorruptRecordException InvalidMetadataException NotEnoughReplicasAfterAppendException NotEnoughReplicasException OffsetOutOfRangeException TimeoutException
-   * UnknownTopicOrPartitionException
+   * CorruptRecordException InvalidMetadataException NotEnoughReplicasAfterAppendException NotEnoughReplicasException
+   * OffsetOutOfRangeException TimeoutException UnknownTopicOrPartitionException
    */
   @Override
   public void onCompletion(final RecordMetadata metadata, final Exception exception) {
