@@ -57,7 +57,7 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  
  The program produces four encrypted payloads on the blockchain and then consumes them with decryption. A second program verifies the whole blockchain without needing to decrypt it. Before re-running this demonstration, remove the previous blockchain messages by running this script first.
  
- > scripts/run-kafka-blockchain-encryption-demo-reset.sh
+ > scripts/run-kafka-blockchain-demo-encryption-reset.sh
  
 **Kafka blockchain benchmark**
  
