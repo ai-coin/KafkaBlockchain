@@ -31,6 +31,7 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  Launch Kafka in a second terminal session after ZooKeeper initializes.
  > cd ~/kafka_2.12-2.5.0; bin/kafka-server-start.sh config/server.properties
  
+ Launch the demonstrations in a third terminal session after Kafka initializes.
  **Kafka blockchain demonstration**
  
  Navigate to this project's directory, and launch this script in a third terminal session which runs the KafkaBlockchain demo.
