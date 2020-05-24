@@ -26,10 +26,10 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  These demonstrations perform KafkaBlockchain operations using a test Kafka broker configured per [Kafka Quickstart"](https://kafka.apache.org/quickstart).
  
  Launch ZooKeeper in a terminal session
- > cd ~/kafka_2.11-2.1.0; bin/zookeeper-server-start.sh config/zookeeper.properties
+ > cd ~/kafka_2.12-2.5.0; bin/zookeeper-server-start.sh config/zookeeper.properties
  
  Launch Kafka in a second terminal session after ZooKeeper initializes.
- > cd ~/kafka_2.11-2.1.0; bin/kafka-server-start.sh config/server.properties
+ > cd ~/kafka_2.12-2.5.0; bin/kafka-server-start.sh config/server.properties
  
  **Kafka blockchain demonstration**
  
