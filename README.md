@@ -19,6 +19,9 @@ On the Amazon cloud, there is a prepared Ubuntu image with Java 14, Maven, Apach
 
 [Using the AiB KafkaBlockchain Demo on AWS](https://github.com/ai-coin/KafkaBlockchain/blob/master/doc/Using%20the%20AiB%20KafkaBlockchain%20Demo%20on%20AWS.pdf)
 
+**How the KafkaBlockchain image is built:** Here are the instructions for building the KafkaBlockchain demonstration image on AWS. The steps are similar for a build elsewhere.
+[Building the AiB KafkaBlockchain AMI on Amazon Web Services](https://github.com/ai-coin/KafkaBlockchain/blob/master/doc/Building%20the%20AiB%20KafkaBlockchain%20AMI%20on%20Amazon%20Web%20Services.pdf)
+
 
 **Dependencies:**
 This library uses the Bouncy Castle crypto library.
