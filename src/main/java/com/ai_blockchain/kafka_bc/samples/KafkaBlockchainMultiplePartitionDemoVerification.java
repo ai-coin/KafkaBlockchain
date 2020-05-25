@@ -76,8 +76,12 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
   // the ZooKeeper access object, which is used to retrieve the genesis block hash
   private final ZooKeeperAccess zooKeeperAccess;
+  // the default blockchain name (topic)
+  public static final String DEFAULT_BLOCKCHAIN_NAME = "kafka-demo-multiple-partition-blockchain";
   // the blockchain name, which is a Kafka topic
   private static String blockchainName;
+  // the Kafka message consumer group id
+  private static final String KAFKA_GROUP_ID = "demo-multiple-partition-blockchain-consumers";
   // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/<blockchain name>
   public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
   // the blockchain consumers, one for each partition of the topic (blockchain name)
@@ -105,7 +109,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
       blockchainName = args[0].trim();
       LOGGER.info("Verifying the specified Kafka blockchain named " + blockchainName);
     } else {
-      blockchainName = "kafka-benchmark-blockchain";
+      blockchainName = DEFAULT_BLOCKCHAIN_NAME;
       LOGGER.info("Verifying the default Kafka blockchain named " + blockchainName);
     }
     if (args != null && args.length > 1 && "-quiet".equals(args[1])) {
@@ -147,7 +151,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
 
     final Properties consumerProperties = new Properties();
     consumerProperties.put("bootstrap.servers", KAFKA_HOST_ADDRESSES);
-    consumerProperties.put("group.id", "kafka-benchmark-group");
+    consumerProperties.put("group.id", KAFKA_GROUP_ID);
     consumerProperties.put("key.deserializer", StringDeserializer.class.getName());
     consumerProperties.put("value.deserializer", ByteArrayDeserializer.class.getName());
 
@@ -158,7 +162,8 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     LOGGER.info("the blockchain named " + blockchainName + " has " + nbrPartitions + " partitions");
 
     /**
-     * Create a consumer for each partition of the topic (blockchain name), then each consumer will read records exclusively from a single partition.
+     * Create a consumer for each partition of the topic (blockchain name), then each consumer will read records exclusively from a single
+     * partition.
      */
     for (int i = 0; i < nbrPartitions; i++) {
       kafkaBlockchainPartitionConsumers.add(
@@ -171,7 +176,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     for (int i = 0; i < nbrPartitions; i++) {
       final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
       final Thread kafkaBlockchainPartitionConsumerThread = new Thread(kafkaBlockchainPartitionConsumer);
-      LOGGER.info("starting consumer " + (i + 1));
+      LOGGER.info("starting consumer " + i);
       kafkaBlockchainPartitionConsumerThread.start();
     }
 
@@ -179,19 +184,29 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     boolean isReady = false;
     while (!isReady) {
       isReady = true;
+      // LOGGER.info("checking consumers for readiness...");
       for (int i = 0; i < nbrPartitions; i++) {
         final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
         if (kafkaBlockchainPartitionConsumer.isDone()) {
+          // LOGGER.debug("consumer " + i + " is done");
         } else if (kafkaBlockchainPartitionConsumer.getTeObject() == null) {
           isReady = false;
+          // LOGGER.debug("consumer " + i + " is not ready");
           break;
+        } else {
+          // LOGGER.debug("consumer " + i + " is ready with " + kafkaBlockchainPartitionConsumer.getTeObject());
         }
       }
     }
+    LOGGER.info("checking consumers for the first blockchain record in their respective partitions...");
     for (int i = 0; i < nbrPartitions; i++) {
       final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
-      LOGGER.info("consumer " + (i + 1) + ", first record " + kafkaBlockchainPartitionConsumer.getTeObject());
-      assert kafkaBlockchainPartitionConsumer.getTeObject() != null;
+      if (kafkaBlockchainPartitionConsumer.isDone()) {
+        LOGGER.info("consumer " + i + " is done");
+      } else {
+        LOGGER.info("consumer " + i + ", first record in partition " + kafkaBlockchainPartitionConsumer.getTeObject());
+        assert kafkaBlockchainPartitionConsumer.getTeObject() != null;
+      }
     }
 
     LOGGER.info("finding the genesis record for " + blockchainName + "...");
@@ -200,14 +215,16 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     // find and verify the first (genesis) record of the blockchain, whose SHA-256 was stored in ZooKeeper for this topic
     for (int i = 0; i < nbrPartitions; i++) {
       final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
-      final TEObject teObject = kafkaBlockchainPartitionConsumer.getTeObject();
-      assert teObject != null;
-      if (genesisSHA256Hash.equals(teObject.getTEObjectHash())) {
-        LOGGER.info("found genesis record " + teObject + ", having serialNbr " + teObject.getSerialNbr());
-        previousTEObject = teObject;
-        // release this consumer to advance to its next record
-        kafkaBlockchainPartitionConsumer.resetTeObject();
-        break;
+      if (!kafkaBlockchainPartitionConsumer.isDone()) {
+        final TEObject teObject = kafkaBlockchainPartitionConsumer.getTeObject();
+        assert teObject != null;
+        if (genesisSHA256Hash.equals(teObject.getTEObjectHash())) {
+          LOGGER.info("found genesis record " + teObject + ", having serialNbr " + teObject.getSerialNbr());
+          previousTEObject = teObject;
+          // release this consumer to advance to its next record
+          kafkaBlockchainPartitionConsumer.resetTeObject();
+          break;
+        }
       }
     }
 
@@ -346,7 +363,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
               isStillRunning = false;
               break;
             }
-            LOGGER.info("thread " + partition + " received records from partition " + consumerRecords.partitions());
+            LOGGER.info("thread " + partition + " received " + consumerRecords.count() + " records from partition " + consumerRecords.partitions());
 
             for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
               if (++recordCnt % 100000 == 0) {
@@ -354,9 +371,10 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
               }
               LOGGER.debug("thread " + partition + " received consumerRecord " + consumerRecord);
               final byte[] serializedTEObject = consumerRecord.value();
-              teObject = (TEObject) Serialization.deserialize(serializedTEObject);
-              LOGGER.info("thread " + partition + "   deserialized teObject " + teObject);
+              final TEObject teObject1 = (TEObject) Serialization.deserialize(serializedTEObject);
+              LOGGER.info("thread " + partition + "   deserialized teObject " + teObject1);
               // spin-wait for the main thread to use up the current tamper evident object before examining the next one from this partition
+              teObject = teObject1;
               while (teObject != null) {
               }
             }
@@ -379,7 +397,8 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     }
 
     /**
-     * Gets the current tamper evident object read from the partition associated with this consumer, which is shared with the main thread for ordering.
+     * Gets the current tamper evident object read from the partition associated with this consumer, which is shared with the main thread
+     * for ordering.
      *
      * @return the current tamper evident object
      */
@@ -388,7 +407,8 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     }
 
     /**
-     * Resets the current tamper evident object read from the partition associated with this consumer, which is shared with the main thread for ordering.
+     * Resets the current tamper evident object read from the partition associated with this consumer, which is shared with the main thread
+     * for ordering.
      */
     public void resetTeObject() {
       teObject = null;
