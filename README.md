@@ -17,7 +17,7 @@ To manage Kafka blockchains, the sample programs store the first (genesis) messa
 **Try KafkaBlockchain on AWS:**
 On the Amazon cloud, there is a prepared Ubuntu image with Java 14, Maven, Apache Kafka and KafkaBlockchain installed and ready to demonstrate.
 
-[Using the AiB KafkaBlockchain Demo on AWS"](https://github.com/ai-coin/KafkaBlockchain/blob/master/doc/Using%20the%20AiB%20KafkaBlockchain%20Demo%20on%20AWS.pdf)
+[Using the AiB KafkaBlockchain Demo on AWS](https://github.com/ai-coin/KafkaBlockchain/blob/master/doc/Using%20the%20AiB%20KafkaBlockchain%20Demo%20on%20AWS.pdf)
 
 
 **Dependencies:**
