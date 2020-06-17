@@ -117,7 +117,7 @@ public class TEHashChainTest {
     TEHashChain instance = new TEHashChain();
     instance.appendSerializable(obj);
     int index = 0;
-    TEObject result = instance.getTEObject(index);
+    TEObject result = (TEObject) instance.getTEObject(index);
     assertEquals("test payload 1", result.getPayload());
   }
 

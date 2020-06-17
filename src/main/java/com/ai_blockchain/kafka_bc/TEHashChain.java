@@ -38,7 +38,7 @@ public final class TEHashChain {
   // the logger
   private static final Logger LOGGER = Logger.getLogger(TEHashChain.class);
   // the hash chain
-  private final List<TEObject> teObjects = new ArrayList<>();
+  private final List<TamperEvident> teObjects = new ArrayList<>();
   // the SHA-256 hash of the last item
   private SHA256Hash sha256Hash = null;
 
@@ -80,20 +80,15 @@ public final class TEHashChain {
    *
    * @param teObject the given tamper evident object
    */
-  public void appendTEObject(final TEObject teObject) {
+  public void appendTEObject(final TamperEvident teObject) {
     //Preconditions
     assert teObject != null : "teObject must not be null";
 
-    // make another tamper evident object using the serialied contents of the given one
-    final TEObject verifyingTEObject = new TEObject(
-            Serialization.deserialize(teObject.getPayloadBytes()), // payload
-            sha256Hash, // previousTEObjectHash
-            teObject.getSerialNbr());
-    if (!teObject.equals(verifyingTEObject)) {
+    if (!teObject.isValid()) {
       throw new IllegalArgumentException("given tamper evident object is not consistent " + teObject);
     }
     teObjects.add(teObject);
-    sha256Hash = teObject.getTEObjectHash();
+    sha256Hash = teObject.getTEHash();
   }
 
   /**
@@ -102,7 +97,7 @@ public final class TEHashChain {
    * @param index the specified index location
    * @return the tamper evident object
    */
-  public TEObject getTEObject(final int index) {
+  public TamperEvident getTEObject(final int index) {
     //Preconditions
     assert index >= 0 && index < teObjects.size() :
             "invalid index " + index + ", must be in the range [0 ... " + (teObjects.size() - 1) + "]";
@@ -202,26 +197,22 @@ public final class TEHashChain {
     assert index < teObjects.size() : "index must specify a value within the chain, whose size is " + teObjects.size();
 
     final int teObjects_size = teObjects.size();
-    TEObject previousTEObject;
+    TamperEvident previousTEObject;
     if (index > 0) {
       previousTEObject = teObjects.get(index - 1);
     } else {
       previousTEObject = null;
     }
     for (int i = index; i < teObjects_size; i++) {
-      final TEObject teObject = teObjects.get(i);
+      final TamperEvident teObject = teObjects.get(i);
       // make another tamper evident object using the serialized contents of the given one
       final Serializable verifyingPayload = Serialization.deserialize(teObject.getPayloadBytes());
-      final TEObject verifyingTEObject = new TEObject(
-              verifyingPayload, // payload
-              previousTEObject, // previousTEObjectHash
-              teObject.getSerialNbr());
-      if (!teObject.equals(verifyingTEObject)) {
+      if (!teObject.isValid()) {
         return false;
       }
       previousTEObject = teObject;
     }
     // check the last item's hash
-    return sha256Hash.equals(teObjects.get(teObjects_size - 1).getTEObjectHash());
+    return sha256Hash.equals(teObjects.get(teObjects_size - 1).getTEHash());
   }
 }

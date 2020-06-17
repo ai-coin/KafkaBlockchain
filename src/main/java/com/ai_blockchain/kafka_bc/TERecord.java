@@ -1,5 +1,5 @@
 /*
- * TEObject.java
+ * TERecord.java
  *
  * Created on May 26, 2017, 10:35:09 AM
  *
@@ -27,69 +27,90 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
+import java.util.Arrays;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author reed
  */
-public class TEObject implements Serializable, TamperEvident  {
+public record TERecord(
+        // the serialized payload bytes
+        byte[] payloadBytes,
+        // the SHA256 hash of the previous TERecord, which is not present for the first TERecord in the hash chain
+        SHA256Hash previousTERecordHash,
+        // the SHA256 hash of the previous hash plus the hash of the payload
+        SHA256Hash teRecordHash,
+        // the serial number
+        long serialNbr)
+        implements Serializable, TamperEvident {
 
   // the serial version UID, which by being explicitly declared allows changes to this class without voiding
   // the previously created serializations
   static final long serialVersionUID = 1L;
 
   // the logger
-  private static final Logger LOGGER = Logger.getLogger(TEObject.class);
-
-  // the serialized payload bytes
-  private final byte[] payloadBytes;
-
-  // the SHA256 hash of the previous TEObject, which is not present for the first TEObject in the hash chain
-  private final SHA256Hash previousTEObjectHash;
-
-  // the SHA256 hash of the previous hash plus the hash of the payload
-  private final SHA256Hash teObjectHash;
-
-  // the serial number
-  private final long serialNbr;
+  private static final Logger LOGGER = Logger.getLogger(TERecord.class);
 
   /**
-   * Constructs a new TEObject instance.
+   * Constructs a new TERecord instance.
+   */
+  public TERecord    {
+    //Preconditions
+    assert payloadBytes != null : "payloadBytes must not be null";
+    assert serialNbr >= 0 : "serialNbr must be a non-negative number";
+    assert teRecordHash != null : "teRecordHash must not be null";
+  }
+
+  /**
+   * Constructs a new TERecord instance.
    *
    * @param payload the payload object to be made tamper evident in a hash chain
-   * @param previousTEObject the previous TEObject in the hash chain
+   * @param previousTERecord the previous TERecord in the hash chain
    * @param serialNbr the serial number
    */
-  public TEObject(
+  public TERecord(
           final Serializable payload,
-          final TEObject previousTEObject,
+          final TERecord previousTERecord,
           final long serialNbr) {
-    this(
-            payload,
-            (previousTEObject == null) ? null : previousTEObject.teObjectHash,
+    this(Serialization.serialize(payload),
+            (previousTERecord == null) ? null : previousTERecord.teRecordHash,
             serialNbr);
   }
 
   /**
-   * Constructs a new TEObject instance.
+   * Constructs a new TERecord instance.
    *
    * @param payload the payload object to be made tamper evident in a hash chain
-   * @param previousTEObjectHash the SHA256 hash of the previous TEObject, which is not present for the first TEObject in the hash chain
-   * @param serialNbr the serial number
+   * @param previousTERecordHash the SHA256 hash of the previous TERecord, which is not present for the first TERecord in the hash chain
+   * @param serialNbr the serial number the serial number
    */
-  public TEObject(
-          final Serializable payload,
-          final SHA256Hash previousTEObjectHash,
+  protected TERecord(
+          final byte[] payloadBytes,
+          final SHA256Hash previousTERecordHash,
           final long serialNbr) {
-    //Preconditions
-    assert payload != null : "payload must not be null";
-    assert serialNbr >= 0 : "serialNbr must be a non-negative number";
+    this(
+            payloadBytes,
+            previousTERecordHash,
+            computeTERecordHash(
+                    previousTERecordHash,
+                    payloadBytes,
+                    serialNbr),
+            serialNbr);
+  }
 
-    payloadBytes = Serialization.serialize(payload);
-    this.previousTEObjectHash = previousTEObjectHash;
-    this.serialNbr = serialNbr;
+  /**
+   * Computes the SHA-256 hash using the payload bytes, the serial number, and the previous hash in the blockchain.
+   *
+   * @param previousTERecordHash the previous TERecord in the hash chain
+   * @param payloadBytesthe serialized payload bytes
+   * @param serialNbr
+   * @return
+   */
+  private static SHA256Hash computeTERecordHash(
+          final SHA256Hash previousTERecordHash,
+          final byte[] payloadBytes,
+          final long serialNbr) {
 
     // hash the previous hash if present, then hash the payload
     final MessageDigest messageDigest;
@@ -99,8 +120,8 @@ public class TEObject implements Serializable, TamperEvident  {
       throw new RuntimeException(ex);
     }
     messageDigest.reset();
-    if (previousTEObjectHash != null) {
-      messageDigest.update(previousTEObjectHash.getBytes());
+    if (previousTERecordHash != null) {
+      messageDigest.update(previousTERecordHash.getBytes());
     }
     messageDigest.update(payloadBytes);
     final ByteBuffer byteBuffer = ByteBuffer.allocate(Long.BYTES);
@@ -108,7 +129,7 @@ public class TEObject implements Serializable, TamperEvident  {
             0, // index
             serialNbr); // value
     messageDigest.update(byteBuffer.array());
-    teObjectHash = new SHA256Hash(messageDigest.digest());
+    return new SHA256Hash(messageDigest.digest());
   }
 
   /**
@@ -146,7 +167,7 @@ public class TEObject implements Serializable, TamperEvident  {
    * @return the SHA256 hash of the previous tamper-evident object or null if no predecessor
    */
   public SHA256Hash getPreviousHash() {
-    return previousTEObjectHash;
+    return previousTERecordHash;
   }
 
   /**
@@ -156,7 +177,7 @@ public class TEObject implements Serializable, TamperEvident  {
    */
   @Override
   public SHA256Hash getTEHash() {
-    return teObjectHash;
+    return teRecordHash;
   }
 
   /**
@@ -164,22 +185,22 @@ public class TEObject implements Serializable, TamperEvident  {
    *
    * @return the SHA256 hash of the previous hash plus the hash of the payload
    */
-  public SHA256Hash getTEObjectHash() {
-    return teObjectHash;
+  public SHA256Hash getTERecordHash() {
+    return teRecordHash;
   }
 
   /**
-   * Returns whether this tamper-evident object is a valid successor to the previous TEObject, which is checked only for valid
+   * Returns whether this tamper-evident object is a valid successor to the previous TERecord, which is checked only for valid
    * deserialization and reserialization.
    *
-   * @param previousTEObject the previous tamper-evident object
-   * @return whether this tamper-evident object is a valid successor to the previous TEObject
+   * @param previousTERecord the previous tamper-evident object
+   * @return whether this tamper-evident object is a valid successor to the previous TERecord
    */
-  public boolean isValidSuccessor(final TEObject previousTEObject) {
+  public boolean isValidSuccessor(final TERecord previousTERecord) {
     //Preconditions
-    assert previousTEObject != null : "previousTEObject must not be null";
+    assert previousTERecord != null : "previousTERecord must not be null";
 
-    if (!previousTEObject.isValid()) {
+    if (!previousTERecord.isValid()) {
       return false;
     }
     if (!this.isValid()) {
@@ -187,7 +208,7 @@ public class TEObject implements Serializable, TamperEvident  {
     }
 
     // return whether the hash chain is verified
-    return this.previousTEObjectHash.equals(previousTEObject.teObjectHash);
+    return this.previousTERecordHash.equals(previousTERecord.teRecordHash);
   }
 
   /**
@@ -197,54 +218,24 @@ public class TEObject implements Serializable, TamperEvident  {
    */
   @Override
   public boolean isValid() {
-    return this.equals(new TEObject(
-            getPayload(),
-            previousTEObjectHash,
-            serialNbr));
-  }
-
-  /**
-   * Returns a hash code for this object.
-   *
-   * @return a hash code for this object
-   */
-  @Override
-  public int hashCode() {
-    int hash = 5;
-    hash = 23 * hash + java.util.Arrays.hashCode(this.payloadBytes);
-    hash = 23 * hash + Objects.hashCode(this.previousTEObjectHash);
-    hash = 23 * hash + Objects.hashCode(this.teObjectHash);
-    return hash;
-  }
-
-  /**
-   * Returns whether another object equals this one.
-   *
-   * @param obj the other object
-   * @return whether another object equals this one
-   */
-  @Override
-  public boolean equals(final Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
+    final TERecord teRecord1 = new TERecord(
+            Serialization.serialize(getPayload()),
+            previousTERecordHash,
+            serialNbr);
+    if (!Arrays.equals(this.payloadBytes, teRecord1.payloadBytes)) {
       return false;
-    }
-    if (getClass() != obj.getClass()) {
+    } else if (this.previousTERecordHash == null && teRecord1.previousTERecordHash != null) {
       return false;
-    }
-    final TEObject other = (TEObject) obj;
-    if (!java.util.Arrays.equals(this.payloadBytes, other.payloadBytes)) {
+    } else if (this.previousTERecordHash != null && teRecord1.previousTERecordHash == null) {
       return false;
-    }
-    if (!Objects.equals(this.serialNbr, other.serialNbr)) {
+    } else if ((this.previousTERecordHash != null && teRecord1.previousTERecordHash != null)
+            && (!this.previousTERecordHash.equals(teRecord1.previousTERecordHash))) {
       return false;
-    }
-    if (!Objects.equals(this.previousTEObjectHash, other.previousTEObjectHash)) {
+    } else if (!this.teRecordHash.equals(teRecord1.teRecordHash)) {
       return false;
+    } else {
+      return this.serialNbr == teRecord1.serialNbr;
     }
-    return Objects.equals(this.teObjectHash, other.teObjectHash);
   }
 
   /**
@@ -255,7 +246,7 @@ public class TEObject implements Serializable, TamperEvident  {
   @Override
   public String toString() {
     return (new StringBuilder())
-            .append("[TEObject ")
+            .append("[TERecord ")
             .append(serialNbr)
             .append(", wrapping a payload of ")
             .append(payloadBytes.length)
