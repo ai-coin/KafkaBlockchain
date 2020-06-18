@@ -17,8 +17,6 @@
  */
 package com.ai_blockchain.kafka_bc;
 
-import com.ai_blockchain.kafka_bc.ByteUtils;
-import com.ai_blockchain.kafka_bc.Serialization;
 import java.io.Serializable;
 import org.apache.log4j.Logger;
 import org.junit.After;

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -122,6 +123,30 @@ public class KafkaAccess {
     //Postconditions
     assert createTopicsResult.values().keySet().size() == 1;
     final String key = createTopicsResult.values().keySet().iterator().next();
+    assert key != null && !key.isEmpty() : "key must be a non-empty string";
+    assert key.equals(topic);
+  }
+
+  /**
+   * Deletes the given topic.
+   *
+   * @param topic the given topic
+   */
+  public void deleteTopic(final String topic) {
+    //Preconditions
+    assert topic != null && !topic.isEmpty() : "topic must be a non-empty string";
+    assert adminClient != null : "adminClient must not be null";
+
+    final List<String> topics = new ArrayList<>();
+    topics.add(topic);
+    final DeleteTopicsResult deleteTopicsResult = adminClient.deleteTopics(topics);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  deleteTopicsResult topics=" + deleteTopicsResult.values().keySet());
+    }
+
+    //Postconditions
+    assert deleteTopicsResult.values().keySet().size() == 1;
+    final String key = deleteTopicsResult.values().keySet().iterator().next();
     assert key != null && !key.isEmpty() : "key must be a non-empty string";
     assert key.equals(topic);
   }

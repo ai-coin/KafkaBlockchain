@@ -22,11 +22,13 @@
  */
 package com.ai_blockchain.kafka_bc;
 
+import java.io.Serializable;
+
 /**
  *
  * @author reed
  */
-public interface TamperEvident {
+public interface TamperEvident extends Serializable {
   
   /**
    * Returns the serial number.

@@ -86,7 +86,7 @@ public record TERecord(
    * @param previousTERecordHash the SHA256 hash of the previous TERecord, which is not present for the first TERecord in the hash chain
    * @param serialNbr the serial number the serial number
    */
-  protected TERecord(
+  public TERecord(
           final byte[] payloadBytes,
           final SHA256Hash previousTERecordHash,
           final long serialNbr) {
