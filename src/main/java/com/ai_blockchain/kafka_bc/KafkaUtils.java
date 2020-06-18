@@ -148,9 +148,9 @@ public class KafkaUtils {
         LOGGER.debug("consumerRecord: " + consumerRecord);
       }
       final byte[] serializedTEObject = consumerRecord.value();
-      TEObject teObject;
+      TamperEvident teObject;
       try {
-        teObject = (TEObject) Serialization.deserialize(serializedTEObject);
+        teObject = (TamperEvident) Serialization.deserialize(serializedTEObject);
       } catch (Exception ex) {
         teObject = null;
       }
@@ -164,7 +164,7 @@ public class KafkaUtils {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("  deserialized teObject " + teObject);
         }
-        previousSHA256Hash = teObject.getTEObjectHash();
+        previousSHA256Hash = teObject.getTEHash();
         serialNbr = teObject.getSerialNbr();
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("  previousSHA256Hash " + previousSHA256Hash);

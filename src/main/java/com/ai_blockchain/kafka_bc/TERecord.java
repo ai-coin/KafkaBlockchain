@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Objects;
 import org.apache.log4j.Logger;
 
 /**
@@ -236,6 +237,50 @@ public record TERecord(
     } else {
       return this.serialNbr == teRecord1.serialNbr;
     }
+  }
+
+  /**
+   * Returns a hash code for this object.
+   *
+   * @return a hash code for this object
+   */
+  @Override
+  public int hashCode() {
+    int hash = 5;
+    hash = 23 * hash + java.util.Arrays.hashCode(this.payloadBytes);
+    hash = 23 * hash + Objects.hashCode(this.previousTERecordHash);
+    hash = 23 * hash + Objects.hashCode(this.teRecordHash);
+    return hash;
+  }
+
+  /**
+   * Returns whether another object equals this one.
+   *
+   * @param obj the other object
+   * @return whether another object equals this one
+   */
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final TERecord other = (TERecord) obj;
+    if (!java.util.Arrays.equals(this.payloadBytes, other.payloadBytes)) {
+      return false;
+    }
+    if (!Objects.equals(this.serialNbr, other.serialNbr)) {
+      return false;
+    }
+    if (!Objects.equals(this.previousTERecordHash, other.previousTERecordHash)) {
+      return false;
+    }
+    return Objects.equals(this.teRecordHash, other.teRecordHash);
   }
 
   /**

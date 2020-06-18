@@ -25,6 +25,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -82,6 +83,45 @@ public class TERecordTest {
   }
 
   /**
+   * Test payloadBytes record access method.
+   */
+  @Test
+  public void testPayloadBytes() {
+    LOGGER.info("payloadBytes");
+    assertNotNull(instance.payloadBytes());
+    assertEquals(21, instance.payloadBytes().length);
+  }
+
+  /**
+   * Test previousTERecordHash record access method.
+   */
+  @Test
+  public void testPreviousTERecordHash() {
+    LOGGER.info("previousTERecordHash");
+    assertNotNull(instance.previousTERecordHash());
+    assertEquals("0eae1eac907785f36f7ebbed5c9111995ede4c84728428eb6659a2166695e234", instance.previousTERecordHash().toString());
+  }
+
+  /**
+   * Test teRecordHash record access method.
+   */
+  @Test
+  public void testEeRecordHash() {
+    LOGGER.info("teRecordHash");
+    assertNotNull(instance.teRecordHash());
+    assertEquals("aa415219a530324cb51ba93d01a0654cbcd30f487d1c3fbc1ea65496ce4ea3b3", instance.teRecordHash().toString());
+  }
+
+  /**
+   * Test serialNbr record access method.
+   */
+  @Test
+  public void testSerialNbr() {
+    LOGGER.info("serialNbr");
+    assertEquals(2, instance.serialNbr());
+  }
+
+  /**
    * Test of getPayloadBytes method, of class TERecord.
    */
   @Test
@@ -112,7 +152,6 @@ public class TERecordTest {
     assertEquals("aa415219a530324cb51ba93d01a0654cbcd30f487d1c3fbc1ea65496ce4ea3b3", result.toString());
   }
 
-
   /**
    * Test of isValidSuccessor method, of class TERecord.
    */
@@ -130,7 +169,21 @@ public class TERecordTest {
   @Test
   public void testHashCode() {
     LOGGER.info("hashCode");
-    assertEquals(-147191931, teRecord1.hashCode());
+    assertEquals(691564675, teRecord1.hashCode());
+  }
+
+  /**
+   * Test of equals method of class TERecord.
+   */
+  @Test
+  public void testEquals() {
+    LOGGER.info("equals");
+    final TERecord instance1 = new TERecord(
+            "test payload 2", // payload
+            teRecord1, // previousTERecord
+            2); // serialNbr
+    assertEquals(instance.toString(), instance1.toString());
+    assertEquals(instance, instance1);
   }
 
   /**

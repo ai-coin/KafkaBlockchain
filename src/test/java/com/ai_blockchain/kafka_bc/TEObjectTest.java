@@ -17,13 +17,10 @@
  */
 package com.ai_blockchain.kafka_bc;
 
-import com.ai_blockchain.kafka_bc.SHA256Hash;
-import com.ai_blockchain.kafka_bc.TEHashChain;
-import com.ai_blockchain.kafka_bc.TEObject;
-import com.ai_blockchain.kafka_bc.Serialization;
 import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
@@ -32,7 +29,6 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  *
