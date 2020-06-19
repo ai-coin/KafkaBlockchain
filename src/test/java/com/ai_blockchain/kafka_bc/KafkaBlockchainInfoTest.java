@@ -17,15 +17,13 @@
  */
 package com.ai_blockchain.kafka_bc;
 
-import com.ai_blockchain.kafka_bc.SHA256Hash;
-import com.ai_blockchain.kafka_bc.KafkaBlockchainInfo;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
