@@ -1,8 +1,9 @@
 #!/bin/sh
-# ****************************************************************************
-# * runs the demonstration for an encrypted Kafka blockchain
-# ****************************************************************************
+# ********************************************************************************************
+# * runs the demonstration for an encrypted Kafka blockchain, and preview enabled for Java 14.
+# ********************************************************************************************
 
+export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
 KAFKA_VERSION=kafka_2.12-2.5.0
 
 echo demonstrate putting encrypted messages into a Kafka blockchain named kafka-demo-encryption-blockchain

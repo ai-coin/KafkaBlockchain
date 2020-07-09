@@ -1,8 +1,9 @@
 #!/bin/sh
-# ****************************************************************************
-# runs the KafkaBlockchainMultiplePartitionDemo program.
-# ****************************************************************************
+# ***************************************************************************************
+# runs the KafkaBlockchainMultiplePartitionDemo program, and preview enabled for Java 14.
+# ***************************************************************************************
 
+export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
 KAFKA_VERSION=kafka_2.12-2.5.0
 
 echo demonstrate putting messages into a Kafka blockchain named kafka-demo-multiple-partition-blockchain
