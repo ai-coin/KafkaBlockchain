@@ -34,6 +34,21 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
 
 # Quickstart
 
+ **Java 14**, using the preview feature for immutable records.
+
+ Compile and test the library
+ > git clone https://github.com/ai-coin/KafkaBlockchain.git
+ > git checkout TERecord 
+ > java -version   # ensure java version 14
+ > export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
+ > cd KafkaBlockchain; mvn test
+
+ **Java 10+**. 
+
+ Compile and test the library
+ > git clone https://github.com/ai-coin/KafkaBlockchain.git
+ > cd KafkaBlockchain; mvn test
+
  These demonstrations perform KafkaBlockchain operations using a test Kafka broker configured per [Kafka Quickstart"](https://kafka.apache.org/quickstart).
  
  Launch ZooKeeper in a terminal session
