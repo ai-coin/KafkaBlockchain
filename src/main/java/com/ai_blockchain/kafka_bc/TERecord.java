@@ -40,10 +40,10 @@ public record TERecord(
         byte[] payloadBytes,
         // the SHA256 hash of the previous TERecord, which is not present for the first TERecord in the hash chain
         SHA256Hash previousTERecordHash,
-        // the SHA256 hash of the previous hash plus the hash of the payload
-        SHA256Hash teRecordHash,
         // the serial number
-        long serialNbr)
+        long serialNbr,
+        // the SHA256 hash of the previous hash, plus the hash of the payload, plus the hash of the serial number
+        SHA256Hash teRecordHash)
         implements Serializable, TamperEvident {
 
   // the serial version UID, which by being explicitly declared allows changes to this class without voiding
@@ -93,15 +93,15 @@ public record TERecord(
     this(
             payloadBytes,
             previousTERecordHash,
+            serialNbr,
             computeTERecordHash(
                     previousTERecordHash,
                     payloadBytes,
-                    serialNbr),
-            serialNbr);
+                    serialNbr));
   }
 
   /**
-   * Computes the SHA-256 hash using the payload bytes, the serial number, and the previous hash in the blockchain.
+   * Computes the SHA-256 hash using the payload bytes, the previous hash in the blockchain, and the serial number.
    *
    * @param previousTERecordHash the previous TERecord in the hash chain
    * @param payloadBytesthe serialized payload bytes
