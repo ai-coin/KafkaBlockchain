@@ -31,7 +31,7 @@
  * > cd ~/kafka_2.12-2.5.0; bin/kafka-server-start.sh config/server.properties
  *
  * Navigate to this project's directory, and launch the script in a third terminal session which runs the KafkaBlockchain benchmark all on one server.
- * > scripts/run-kafka-blockchain-blockchain.sh
+ * > scripts/run-kafka-blockchain-benchmark.sh
  *
  * After the tests are complete, shut down the Kafka session with Ctrl-C.
  *
@@ -76,20 +76,27 @@ public class KafkaBlockchainBenchmark implements Callback {
 
   // the logger
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainBenchmark.class);
+  
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
+  
   // the blockchain name (topic)
   private static final String BLOCKCHAIN_NAME = "kafka-benchmark-blockchain";
+  
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
+  
   public final KafkaBlockchainInfo kafkaBlockchainInfo = new KafkaBlockchainInfo(
           BLOCKCHAIN_NAME, // topic
           SHA256Hash.makeSHA256Hash(""),
           1); // serialNbr
+  
   // the ZooKeeper access object
   private final ZooKeeperAccess zooKeeperAccess;
+  
   // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/kafka-benchmark-blockchain
   public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
+  
   // the indicator whether the first (genesis) blockchain record is being produced, in which case the hash and blockchain name are persisted 
   // in ZooKeeper for this benchmark - and for production would be stored in a secret-keeping facility.
   private boolean isBlockchainGenesis = true;
@@ -125,8 +132,7 @@ public class KafkaBlockchainBenchmark implements Callback {
 
     LOGGER.info("activating Kafka messaging");
     /**
-     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain or 
-     * producers must cooperate for creating the blockchain.
+     * One producer with three partitions.
      */
     kafkaAccess.createTopic(
             BLOCKCHAIN_NAME, // topic
@@ -151,7 +157,7 @@ public class KafkaBlockchainBenchmark implements Callback {
   }
 
   /**
-   * Creates demonstration payloads and puts them into a Kafka blockchain.
+   * Creates ten million demonstration payloads and puts them into a Kafka blockchain.
    */
   public void benchmarkKafkaBlockchain() {
     final int nbrIterations = 10000000;
