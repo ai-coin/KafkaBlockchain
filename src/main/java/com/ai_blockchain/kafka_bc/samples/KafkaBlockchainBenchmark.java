@@ -167,6 +167,9 @@ public class KafkaBlockchainBenchmark implements Callback {
       produce(
               new BenchmarkPayload("benchmark payload", i), // payload
               BLOCKCHAIN_NAME); // topic
+              if (i % 100000 == 0) {
+                LOGGER.info("created " + i + " tamper-evident records");
+              }
     }
     final long durationMillis = System.currentTimeMillis() - startTimeMillis;
     final double durationSeconds = durationMillis / 1000.0d;

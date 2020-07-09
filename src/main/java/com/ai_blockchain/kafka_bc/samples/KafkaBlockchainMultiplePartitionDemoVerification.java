@@ -311,7 +311,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
             isStillRunning = false;
             break;
           } else if (++nbrRecords % 100_000 == 0) {
-            LOGGER.warn("verified " + nbrRecords);
+            LOGGER.warn("verified " + nbrRecords + " tamper-evident records");
           }
           previousTEObject = teObject;
           // release this consumer to advance to its next record
@@ -407,7 +407,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
 
             for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
               if (++recordCnt % 100000 == 0) {
-                LOGGER.warn("consumer-" + partition + " read a total of " + recordCnt + " records from its partition");
+                if (!isQuiet) {
+                  LOGGER.warn("consumer-" + partition + " read a total of " + recordCnt + " records from its partition");
+                }
               }
               if (!isQuiet) {
                 LOGGER.debug("thread " + partition + " received consumerRecord " + consumerRecord);
