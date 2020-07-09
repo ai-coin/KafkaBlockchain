@@ -72,23 +72,34 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
 
   // the logger
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainMultiplePartitionDemoVerification.class);
+
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
+
   // the ZooKeeper access object, which is used to retrieve the genesis block hash
   private final ZooKeeperAccess zooKeeperAccess;
+
   // the default blockchain name (topic)
   public static final String DEFAULT_BLOCKCHAIN_NAME = "kafka-demo-multiple-partition-blockchain";
+
   // the blockchain name, which is a Kafka topic
   private static String blockchainName;
+
   // the Kafka message consumer group id
   private static final String KAFKA_GROUP_ID = "demo-multiple-partition-blockchain-consumers";
+
   // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/<blockchain name>
   public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
+
   // the blockchain consumers, one for each partition of the topic (blockchain name)
   private final List<KafkaBlockchainPartitionConsumer> kafkaBlockchainPartitionConsumers = new ArrayList<>();
+
   // the console terminal escape sequence for green text
   public static final String ANSI_GREEN = "\033[0;32m";
   public static final String ANSI_RESET = "\033[0m";
+
+  // the indicator whether quiet logging is desired
+  private static boolean isQuiet = false;
 
   /**
    * Constructs a new KafkaBlockchainDemoVerification instance.
@@ -115,6 +126,7 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     if (args != null && args.length > 1 && "-quiet".equals(args[1])) {
       Logger.getLogger(KafkaBlockchainMultiplePartitionDemoVerification.class).setLevel(Level.WARN);
       Logger.getLogger(KafkaUtils.class).setLevel(Level.WARN);
+      isQuiet = true;
     }
 
     final KafkaBlockchainMultiplePartitionDemoVerification kafkaBlockchainDemoVerification = new KafkaBlockchainMultiplePartitionDemoVerification();
@@ -136,13 +148,17 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
 
     // list Kafka topics as evidence that the Kafka broker is responsive
     final KafkaAccess kafkaAccess = new KafkaAccess(KAFKA_HOST_ADDRESSES);
-    LOGGER.info("Kafka topics " + kafkaAccess.listTopics());
+    if (!isQuiet) {
+      LOGGER.info("Kafka topics " + kafkaAccess.listTopics());
+    }
     kafkaAccess.close();
 
     // get the genesis hash for this blockchain from ZooKeeper
     final String path = ZK_GENESIS_PATH_PREFIX + blockchainName;
     final String sha256HashString = zooKeeperAccess.getDataString(path);
-    LOGGER.info("genesis hash for path " + path + " = " + sha256HashString);
+    if (!isQuiet) {
+      LOGGER.info("genesis hash for path " + path + " = " + sha256HashString);
+    }
     if (sha256HashString == null) {
       LOGGER.warn("no genesis hash found for the blockchain named " + blockchainName);
       return;
@@ -159,7 +175,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
             blockchainName,
             consumerProperties);
     final int nbrPartitions = assignedTopicPartitions.size();
-    LOGGER.info("the blockchain named " + blockchainName + " has " + nbrPartitions + " partitions");
+    if (!isQuiet) {
+      LOGGER.info("the blockchain named " + blockchainName + " has " + nbrPartitions + " partitions");
+    }
 
     /**
      * Create a consumer for each partition of the topic (blockchain name), then each consumer will read records exclusively from a single
@@ -176,7 +194,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
     for (int i = 0; i < nbrPartitions; i++) {
       final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
       final Thread kafkaBlockchainPartitionConsumerThread = new Thread(kafkaBlockchainPartitionConsumer);
-      LOGGER.info("starting consumer " + i);
+      if (!isQuiet) {
+        LOGGER.info("starting consumer " + i);
+      }
       kafkaBlockchainPartitionConsumerThread.start();
     }
 
@@ -198,7 +218,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
         }
       }
     }
-    LOGGER.info("checking consumers for the first blockchain record in their respective partitions...");
+    if (!isQuiet) {
+      LOGGER.info("checking consumers for the first blockchain record in their respective partitions...");
+    }
     for (int i = 0; i < nbrPartitions; i++) {
       final KafkaBlockchainPartitionConsumer kafkaBlockchainPartitionConsumer = kafkaBlockchainPartitionConsumers.get(i);
       if (kafkaBlockchainPartitionConsumer.isDone()) {
@@ -209,7 +231,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
       }
     }
 
-    LOGGER.info("finding the genesis record for " + blockchainName + "...");
+    if (!isQuiet) {
+      LOGGER.info("finding the genesis record for " + blockchainName + "...");
+    }
     // blockchain connects sucessive tamper-evident objects by storing the SHA-256 hash of the previous record as a field in the current record
     TEObject previousTEObject = null;
     // find and verify the first (genesis) record of the blockchain, whose SHA-256 was stored in ZooKeeper for this topic
@@ -219,7 +243,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
         final TEObject teObject = kafkaBlockchainPartitionConsumer.getTeObject();
         assert teObject != null;
         if (genesisSHA256Hash.equals(teObject.getTEObjectHash())) {
-          LOGGER.info("found genesis record " + teObject + ", having serialNbr " + teObject.getSerialNbr());
+          if (!isQuiet) {
+            LOGGER.info("found genesis record " + teObject + ", having serialNbr " + teObject.getSerialNbr());
+          }
           previousTEObject = teObject;
           // release this consumer to advance to its next record
           kafkaBlockchainPartitionConsumer.resetTeObject();
@@ -258,7 +284,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
         }
       }
       if (areAllConsumersDone) {
-        LOGGER.info("all blockchain partition consumers are done");
+        if (!isQuiet) {
+          LOGGER.info("all blockchain partition consumers are done");
+        }
         isStillRunning = false;
         continue;
       }
@@ -275,7 +303,9 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
           continue;
         }
         if (teObject.getSerialNbr() == nextSerialNbr) {
-          LOGGER.info(ANSI_GREEN + "found successor " + teObject + " in partition " + i + ANSI_RESET);
+          if (!isQuiet) {
+            LOGGER.info(ANSI_GREEN + "found successor " + teObject + " in partition " + i + ANSI_RESET);
+          }
           if (!previousTEObject.getTEObjectHash().equals(teObject.getPreviousHash())) {
             LOGGER.warn("The tamper-evident object is not a valid successor " + teObject + " in the " + blockchainName + " blockchain");
             isStillRunning = false;
@@ -299,12 +329,16 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
 
     // the kafka consumer, one per partition
     private final KafkaConsumer<String, byte[]> kafkaConsumer;
+
     // the topic partition
     private final TopicPartition topicPartition;
+
     // the partition
     private final int partition;
+
     // the current tamper evident object read from the partition associated with this consumer, which is shared with the main thread for ordering
     private volatile TEObject teObject = null;
+
     // the indicator whether this consumer is done
     private volatile boolean isDone = false;
 
@@ -349,30 +383,40 @@ public class KafkaBlockchainMultiplePartitionDemoVerification {
           //
           final List<TopicPartition> topicPartitions = new ArrayList<>();
           topicPartitions.add(topicPartition);
-          LOGGER.info("thread " + partition + " assigning topic partition " + topicPartitions);
+          if (!isQuiet) {
+            LOGGER.info("thread " + partition + " assigning topic partition " + topicPartitions);
+          }
           kafkaConsumer.assign(topicPartitions);
-          LOGGER.info("thread " + partition + " seeking to the beginning of topic partition " + topicPartitions);
+          if (!isQuiet) {
+            LOGGER.info("thread " + partition + " seeking to the beginning of topic partition " + topicPartitions);
+          }
           kafkaConsumer.seekToBeginning(topicPartitions);
           int recordCnt = 0;
-          boolean isStillRunning = true;
-          while (isStillRunning) {
-            LOGGER.info("thread " + partition + " consumer poll...");
+          while (true) {
+            if (!isQuiet) {
+              LOGGER.info("thread " + partition + " consumer poll...");
+            }
             ConsumerRecords<String, byte[]> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(1_000)); // timeout
             if (consumerRecords.isEmpty()) {
               LOGGER.warn("thread " + partition + "...end of consumed records");
-              isStillRunning = false;
               break;
             }
-            LOGGER.info("thread " + partition + " received " + consumerRecords.count() + " records from partition " + consumerRecords.partitions());
+            if (!isQuiet) {
+              LOGGER.info("thread " + partition + " received " + consumerRecords.count() + " records from partition " + consumerRecords.partitions());
+            }
 
             for (ConsumerRecord<String, byte[]> consumerRecord : consumerRecords) {
               if (++recordCnt % 100000 == 0) {
                 LOGGER.warn("consumer-" + partition + " read a total of " + recordCnt + " records from its partition");
               }
-              LOGGER.debug("thread " + partition + " received consumerRecord " + consumerRecord);
+              if (!isQuiet) {
+                LOGGER.debug("thread " + partition + " received consumerRecord " + consumerRecord);
+              }
               final byte[] serializedTEObject = consumerRecord.value();
               final TEObject teObject1 = (TEObject) Serialization.deserialize(serializedTEObject);
-              LOGGER.info("thread " + partition + "   deserialized teObject " + teObject1);
+              if (!isQuiet) {
+                LOGGER.info("thread " + partition + "   deserialized teObject " + teObject1);
+              }
               // spin-wait for the main thread to use up the current tamper evident object before examining the next one from this partition
               teObject = teObject1;
               while (teObject != null) {
