@@ -85,28 +85,39 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
 
   // the logger
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainEncryptionDemo.class);
+  
   // the Kafka producer to which tamper evident messages are sent for transport to the Kafka broker.
   private KafkaProducer<String, byte[]> kafkaProducer;
+  
   // the blockchain name (topic)
   private static final String KAFKA_DEMO_ENCRYPTION_BLOCKCHAIN = "kafka-demo-encryption-blockchain";
+  
   // the list of Kafka broker seed addresses, formed as "host1:port1, host2:port2, ..."
   public static final String KAFKA_HOST_ADDRESSES = "localhost:9092";
+  
   // the Kafka message consumer group id
   private static final String KAFKA_GROUP_ID = "demo-encryption-blockchain-consumers";
+  
   // the Kafka message consumer
   private ConsumerLoop consumerLoop;
+  
   // the Kafka message consumer loop thread
   private Thread kafkaConsumerLoopThread;
+  
   // the blockchain hash dictionary, blockchain name --> Kafka blockchain info
   // this demo only uses one blockchain however
   private final Map<String, KafkaBlockchainInfo> blockchainHashDictionary = new HashMap<>();
+  
   // the demonstration encryption key, which in production is managed by the application
   final static byte[] RAW_KEY_DATA = new byte[32];
+  
   // the ZooKeeper access object
   private final ZooKeeperAccess zooKeeperAccess;
+  
   // the indicator whether the first (genesis) blockchain record is being produced, in which case the hash and blockchain name are persisted 
   // in ZooKeeper for this demonstration - and for production would be stored in a secret-keeping facility.
   private boolean isBlockchainGenesis = true;
+  
   // the prefix used for ZooKeeper genesis data, the path has the format /KafkaBlockchain/kafka-demo-encryption-blockchain
   public static final String ZK_GENESIS_PATH_PREFIX = "/KafkaBlockchain/";
 
@@ -190,7 +201,8 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
 
     LOGGER.info("activating Kafka messaging");
     /**
-     * Because Kafka does not sequentially order in multiple partitions, one partition must be specified for a Kafka blockchain.
+     * Unless producers cooperate, one partition must be specified for a Kafka blockchain, because Kafka does not sequentially order in 
+     * multiple partitions.
      */
     kafkaAccess.createTopic(KAFKA_DEMO_ENCRYPTION_BLOCKCHAIN, // topic
             1, // numPartitions
@@ -240,7 +252,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
         if (kafkaBlockchainInfo == null) {
           kafkaBlockchainInfo = new KafkaBlockchainInfo(
                   topic,
-                  SHA256Hash.makeSHA256Hash(""),
+                  SHA256Hash.makeSHA256Hash(topic),
                   1); // serialNbr
           LOGGER.info("initial previousTEObjectHash: " + kafkaBlockchainInfo);
         } else {

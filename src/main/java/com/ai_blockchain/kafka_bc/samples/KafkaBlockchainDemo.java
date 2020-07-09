@@ -218,7 +218,7 @@ public class KafkaBlockchainDemo implements Callback {
         if (kafkaBlockchainInfo == null) {
           kafkaBlockchainInfo = new KafkaBlockchainInfo(
                   topic,
-                  SHA256Hash.makeSHA256Hash(""),
+                  SHA256Hash.makeSHA256Hash(topic),
                   1); // serialNbr
           LOGGER.info("initial previousTEObjectHash: " + kafkaBlockchainInfo);
         } else {
