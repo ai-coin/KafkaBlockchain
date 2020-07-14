@@ -36,6 +36,8 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
 
  **Java 14**, using the preview feature for immutable records.
 
+ The Confluent webinar documentation is in the TERecord branch only.
+
  Compile and test the library
  > git clone https://github.com/ai-coin/KafkaBlockchain.git
  > git checkout TERecord 
