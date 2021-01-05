@@ -23,6 +23,7 @@
  */
 package com.ai_blockchain.kafka_bc;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -72,7 +73,7 @@ public class KafkaUtils {
     topics.add(topic);
     // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
     kafkaConsumer.subscribe(topics);
-    kafkaConsumer.poll(100); // timeout
+    kafkaConsumer.poll(Duration.ofMillis(100)); // timeout
     // get the assigned partitions for this topic
     final List<TopicPartition> assignedTopicPartitions = new ArrayList<>();
     assignedTopicPartitions.addAll(kafkaConsumer.assignment());
@@ -112,7 +113,7 @@ public class KafkaUtils {
     topics.add(topic);
     // subscribe to the topic, then poll to trigger Kafka's lazy caching of the topic
     kafkaConsumer.subscribe(topics);
-    kafkaConsumer.poll(100); // timeout
+    kafkaConsumer.poll(Duration.ofMillis(100)); // timeout
     // get the assigned partitions for this topic, which for this application will be every partition for the topic
     final Collection<TopicPartition> assignedTopicPartitions = kafkaConsumer.assignment();
 
@@ -137,8 +138,7 @@ public class KafkaUtils {
       kafkaConsumer.seek(topicPartition, offset);
     }
     // read the most recent consumer record, deserialize the tamper evident object, and return its SHA hash value.
-    final ConsumerRecords consumerRecords = kafkaConsumer.poll(100); // timeout
-    kafkaConsumer.commitAsync();
+    final ConsumerRecords consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100)); // timeout
     final Iterator<ConsumerRecord<String, byte[]>> consumerRecord_iter = consumerRecords.records(topic).iterator();
     final SHA256Hash previousSHA256Hash;
     final long serialNbr;

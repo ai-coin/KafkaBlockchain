@@ -73,7 +73,26 @@ public class KafkaAccess {
   }
 
   /**
-   * Returns whether Kafka is running by attempting to connect.
+   * Constructs a new KafkaAccess instance using the provided connection properties.
+   *
+   * @param properties the provided properties, for example Confluent Cloud credentials and bootstrap URL
+   */
+  public KafkaAccess(final Properties properties) {
+    //Preconditions
+    assert properties != null : "properties must not be null";
+
+    this.properties = properties;
+
+    // the admin client
+    adminClient = AdminClient.create(properties);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("KafkaAccess known topics...");
+    }
+    adminClient.listTopics();
+  }
+
+  /**
+   * Returns whether Kafka is running locally by attempting to connect.
    *
    * @return whether Kafka is running
    */

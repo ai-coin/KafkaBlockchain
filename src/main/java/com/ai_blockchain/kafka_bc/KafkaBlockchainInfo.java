@@ -23,11 +23,12 @@
  */
 package com.ai_blockchain.kafka_bc;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
 import org.apache.log4j.Logger;
 
-public class KafkaBlockchainInfo {
+public class KafkaBlockchainInfo implements Serializable {
 
   // the logger
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainInfo.class);

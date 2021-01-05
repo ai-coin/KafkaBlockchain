@@ -17,6 +17,7 @@
  */
 package com.ai_blockchain.kafka_bc;
 
+import java.io.Serializable;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -30,24 +31,25 @@ import org.junit.Test;
  * @author reed
  */
 public class KafkaBlockchainInfoTest {
+
   // the logger
   private static final Logger LOGGER = Logger.getLogger(KafkaBlockchainInfoTest.class);
-  
+
   public KafkaBlockchainInfoTest() {
   }
-  
+
   @BeforeClass
   public static void setUpClass() {
   }
-  
+
   @AfterClass
   public static void tearDownClass() {
   }
-  
+
   @Before
   public void setUp() {
   }
-  
+
   @After
   public void tearDown() {
   }
@@ -69,7 +71,7 @@ public class KafkaBlockchainInfoTest {
   public void testGetSHA256Hash() {
     LOGGER.info("getSHA256Hash");
     KafkaBlockchainInfo instance = makeKafkaBlockchainInfo();
-    assertEquals("45aeddf736951256e38dcbb5beab9834e6e12be46fd51d1a00ae7bbf8ac67e29",  instance.getSHA256Hash().toString());
+    assertEquals("45aeddf736951256e38dcbb5beab9834e6e12be46fd51d1a00ae7bbf8ac67e29", instance.getSHA256Hash().toString());
   }
 
   /**
@@ -122,13 +124,25 @@ public class KafkaBlockchainInfoTest {
     KafkaBlockchainInfo instance = makeKafkaBlockchainInfo();
     assertEquals(instance, obj);
   }
-  
+
+  /**
+   * Test of serialization, of class KafkaBlockchainInfo.
+   */
+  @Test
+  public void testSerialization() {
+    LOGGER.info("serialization");
+    KafkaBlockchainInfo instance = makeKafkaBlockchainInfo();
+    final Object obj = Serialization.serializeDeserialize(instance);
+    assertTrue(obj instanceof KafkaBlockchainInfo);
+    assertEquals(instance, obj);
+  }
+
   private static KafkaBlockchainInfo makeKafkaBlockchainInfo() {
     final SHA256Hash sha256Hash = SHA256Hash.makeSHA256Hash("abc");
     return new KafkaBlockchainInfo(
-          "test blockchain", // blockchainName
-          sha256Hash,
-          1234); // serialNbr
+            "test blockchain", // blockchainName
+            sha256Hash,
+            1234); // serialNbr
   }
-  
+
 }
