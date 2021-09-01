@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-    
+
   <groupId>com.ai-blockchain</groupId>
   <artifactId>KafkaBlockchain</artifactId>
   <version>1.0</version>
   <packaging>jar</packaging>
-    
+
   <name>KafkaBlockchain</name>
   <description>KafkaBlockchain is a java library for tamper-evidence using Kafka.</description>
   <url>https://github.com/ai-coin/KafkaBlockchain</url>
- 
+
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -18,13 +18,13 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-  
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>10</maven.compiler.source>
     <maven.compiler.target>10</maven.compiler.target>
   </properties>
-    
+
   <build>
     <plugins>
       <plugin>
@@ -36,7 +36,7 @@
           <reportOutputDirectory>${project.basedir}/apidocs</reportOutputDirectory>
         </configuration>
       </plugin>
-            
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -50,7 +50,7 @@
           <argLine>-Xms200M -Xmx1G -ea</argLine>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <!-- KafkaBlockchain is shaded so that its dependencies do not conflict with any Maven project having KafkaBlockchain as a dependency -->
         <groupId>org.apache.maven.plugins</groupId>
@@ -98,32 +98,32 @@
       <artifactId>kafka_2.12</artifactId>
       <version>2.5.0</version>
     </dependency>
-        
+
     <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka-log4j-appender -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-log4j-appender</artifactId>
       <version>0.11.0.0</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <version>1.57</version>
+      <artifactId>bcprov-jdk15to18</artifactId>
+      <version>1.69</version>
     </dependency>
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
-      <version>1.57</version>
+      <artifactId>bcpkix-jdk15to18</artifactId>
+      <version>1.69</version>
     </dependency>
-    
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.7</version>
     </dependency>
-        
+
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
