@@ -24,7 +24,6 @@
  */
 package com.ai_blockchain.kafka_bc;
 
-//import com.google.common.primitives.Ints;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -41,19 +40,20 @@ public class SHA256Hash implements Serializable, Comparable<SHA256Hash> {
   // the SHA-256 hash
   private final byte[] hashBytes;
 
-  /** Construct a new SHA256Hash instance from the given hash bytes.
-   * 
-   * @param hashBytes the given hash bytes 
+  /**
+   * Construct a new SHA256Hash instance from the given hash bytes.
+   *
+   * @param hashBytes the given hash bytes
    */
   public SHA256Hash(final byte[] hashBytes) {
     //Preconditions
     if (hashBytes.length != SHA256_LENGTH) {
-      throw new IllegalArgumentException("SHA-256 hash must have length "+ SHA256_LENGTH);
+      throw new IllegalArgumentException("SHA-256 hash must have length " + SHA256_LENGTH);
     }
-    
+
     this.hashBytes = hashBytes;
   }
-  
+
   /**
    * Creates a new instance that wraps the given hash value (represented as a hex string).
    *
@@ -63,14 +63,15 @@ public class SHA256Hash implements Serializable, Comparable<SHA256Hash> {
   public SHA256Hash(final String hexString) {
     //Preconditions
     if (hexString.length() != (SHA256_LENGTH * 2)) {
-      throw new IllegalArgumentException("SHA-256 hash hex string must have length "+ (SHA256_LENGTH * 2));
+      throw new IllegalArgumentException("SHA-256 hash hex string must have length " + (SHA256_LENGTH * 2));
     }
-    
+
     hashBytes = ByteUtils.hexStringToByteArray(hexString);
   }
 
-  /** Makes a SHA256Hash instance by hashing the given serializable object.
-   * 
+  /**
+   * Makes a SHA256Hash instance by hashing the given serializable object.
+   *
    * @param serializable the given serializable object
    * @return a SHA256Hash instance
    */
@@ -85,16 +86,15 @@ public class SHA256Hash implements Serializable, Comparable<SHA256Hash> {
     messageDigest.update(Serialization.serialize(serializable));
     return new SHA256Hash(messageDigest.digest());
   }
-  
-  
+
   /**
    * Returns the last four bytes of the wrapped hash as the integer Java hash code.
    */
   @Override
   public int hashCode() {
-    return hashBytes[SHA256_LENGTH - 4] << 24 
-            | (hashBytes[SHA256_LENGTH - 3] & 0xFF) << 16 
-            | (hashBytes[SHA256_LENGTH - 2] & 0xFF) << 8 
+    return hashBytes[SHA256_LENGTH - 4] << 24
+            | (hashBytes[SHA256_LENGTH - 3] & 0xFF) << 16
+            | (hashBytes[SHA256_LENGTH - 2] & 0xFF) << 8
             | (hashBytes[SHA256_LENGTH - 1] & 0xFF);
   }
 
@@ -119,8 +119,9 @@ public class SHA256Hash implements Serializable, Comparable<SHA256Hash> {
     return Arrays.equals(this.hashBytes, other.hashBytes);
   }
 
-  /** Returns a string representation of this object.
-   * 
+  /**
+   * Returns a string representation of this object.
+   *
    * @return a string representation of this object
    */
   @Override
@@ -130,8 +131,8 @@ public class SHA256Hash implements Serializable, Comparable<SHA256Hash> {
 
   /**
    * Returns a copy of the immutable byte array
-   * 
-   * @return a copy of the immutable byte array 
+   *
+   * @return a copy of the immutable byte array
    */
   public byte[] getBytes() {
     return hashBytes.clone();

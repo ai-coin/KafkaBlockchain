@@ -17,7 +17,6 @@
  */
 package com.ai_blockchain.kafka_bc;
 
-import com.ai_blockchain.kafka_bc.SHA256Hash;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.apache.log4j.Logger;
