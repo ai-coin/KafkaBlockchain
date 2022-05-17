@@ -111,13 +111,6 @@
       <version>2.7.0</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka-log4j-appender -->
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-log4j-appender</artifactId>
-      <version>0.11.0.0</version>
-    </dependency>
-
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk15to18</artifactId>
@@ -136,29 +129,18 @@
       <version>4.7</version>
     </dependency>
 
+      <!-- route all Log4J API calls to the slf4J logger -->
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <!-- exclude unused Sun jars which otherwise have to be manually downloaded into the local Maven repository -->
-      <exclusions>
-        <exclusion>
-          <groupId>javax.mail</groupId>
-          <artifactId>mail</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>javax.jms</groupId>
-          <artifactId>jms</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.sun.jdmk</groupId>
-          <artifactId>jmxtools</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.sun.jmx</groupId>
-          <artifactId>jmxri</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <version>1.7.36</version>
+    </dependency>
+
+    <!-- route all slf4j API calls to the Java logger -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>1.7.36</version>
     </dependency>
   </dependencies>
 
