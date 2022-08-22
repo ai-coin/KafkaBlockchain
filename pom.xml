@@ -132,12 +132,4 @@
     </dependency>
   </dependencies>
 
-  <distributionManagement>
-    <!-- firewalled for developer updates only -->
-    <repository>
-      <!-- Nexus artifact server must be the same as specified in ~/.m2/settings.xml -->
-      <id>nexus</id>
-      <url>http://api-ai-blockchain-server.dyndns.org:8885/texai-artifact-server/repository/maven-releases/</url>
-    </repository>
-  </distributionManagement>
 </project>
