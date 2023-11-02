@@ -381,7 +381,7 @@ public class KafkaBlockchainEncryptionDemo implements Callback {
      */
     @Override
     public String toString() {
-      return new StringBuffer()
+      return new StringBuffer(100)
               .append("[DemoPayload, string=")
               .append(string)
               .append(", integer=")

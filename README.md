@@ -36,9 +36,13 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
 
  Compile and test the library
  > git clone https://github.com/ai-coin/KafkaBlockchain.git
+ 
  > git checkout TERecord 
- > java -version   # ensure java version 14
+ 
+ > java -version   # ensure java version 14+
+ 
  > export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
+ 
  > cd KafkaBlockchain; mvn test
 
  These demonstrations perform KafkaBlockchain operations using a test Kafka broker configured per [Kafka Quickstart"](https://kafka.apache.org/quickstart).

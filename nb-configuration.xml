@@ -15,4 +15,7 @@ Any value defined here will override the pom.xml file value but is only applicab
 -->
         <netbeans.compile.on.save>none</netbeans.compile.on.save>
     </properties>
+    <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+        <word>blockchain</word>
+    </spellchecker-wordlist>
 </project-shared-configuration>
