@@ -38,7 +38,7 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  
  > export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
  
- > cd KafkaBlockchain; mvn test
+ > mvn test
 
  These demonstrations perform KafkaBlockchain operations using a test Kafka broker configured per [Kafka Quickstart"](https://kafka.apache.org/quickstart).
  
