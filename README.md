@@ -26,7 +26,7 @@ On the Amazon cloud, there is a prepared Ubuntu image with Java 14, Maven, Apach
 **Dependencies:**
 This library uses the Bouncy Castle crypto library.
 Apache Maven is required to build this library, and to run the quickstart examples.
-This library is written using Java 14.
+This library is written using Java 19.
 The jar file is shaded such that the dependencies are hidden from any Maven project which includes KafkaBlockchain as a dependency.
 
 **Goodies:**
@@ -37,9 +37,9 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  Compile and test the library
  > git clone https://github.com/ai-coin/KafkaBlockchain.git
  
- > git checkout TERecord 
+ > cd KafkaBlockchain; git checkout TERecord 
  
- > java -version   # ensure java version 14+
+ > java -version   # ensure java version 19
  
  > export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
  
