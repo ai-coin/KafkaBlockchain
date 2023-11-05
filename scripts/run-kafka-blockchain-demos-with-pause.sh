@@ -1,13 +1,13 @@
 #!/bin/bash
 # ****************************************************************************
-# runs the KafkaBlockchainDemo program, and preview enabled for Java 14.
+# runs the KafkaBlockchainDemo program, and preview enabled for Java 21.
 # If the following error occurs, the Kafka instance is not yet initialized and this script should run OK the second time
 #     Error: Executing consumer group command failed due to org.apache.kafka.common.errors.CoordinatorNotAvailableException: The coordinator is not available.
 #     java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.CoordinatorNotAvailableException: The coordinator is not available.
 # ****************************************************************************
 
 export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
-export KAFKA_VERSION=kafka_2.12-2.5.0
+KAFKA_VERSION=kafka_2.13-3.6.0
 
 echo demonstrate putting messages into a Kafka blockchain named kafka-demo-blockchain
 read -p "Press any key to resume..."
