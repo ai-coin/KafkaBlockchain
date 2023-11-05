@@ -14,11 +14,6 @@ Kafka already implements checksums for message streams to detect data loss. Howe
 
 To manage Kafka blockchains, the sample programs store the first (genesis) message SHA-256 hash for each blockchain topic in ZooKeeper. In production, secret keeping facilities, for example Vault can be used.
 
-**Try KafkaBlockchain on AWS:**
-On the Amazon cloud, there is a prepared Ubuntu image with Java 14, Maven, Apache Kafka and KafkaBlockchain installed and ready to demonstrate.
-
-[Using the AiB KafkaBlockchain Demo on AWS](https://github.com/ai-coin/KafkaBlockchain/blob/master/doc/Using%20the%20AiB%20KafkaBlockchain%20Demo%20on%20AWS.pdf)
-
 **How the KafkaBlockchain image is built:** Here are the instructions for building the KafkaBlockchain demonstration image on AWS. The steps are similar for a build elsewhere.
 [Building the AiB KafkaBlockchain AMI on Amazon Web Services](https://github.com/ai-coin/KafkaBlockchain/blob/master/doc/Building%20the%20AiB%20KafkaBlockchain%20AMI%20on%20Amazon%20Web%20Services.pdf)
 
@@ -26,7 +21,7 @@ On the Amazon cloud, there is a prepared Ubuntu image with Java 14, Maven, Apach
 **Dependencies:**
 This library uses the Bouncy Castle crypto library.
 Apache Maven is required to build this library, and to run the quickstart examples.
-This library is written using Java 19.
+This library is written using Java 21.
 The jar file is shaded such that the dependencies are hidden from any Maven project which includes KafkaBlockchain as a dependency.
 
 **Goodies:**
@@ -39,7 +34,7 @@ Included are utility classes: ByteUtils, KafkaAccess, ZooKeeperAccess, SHA256Has
  
  > cd KafkaBlockchain; git checkout TERecord 
  
- > java -version   # ensure java version 19
+ > java -version   # ensure java version 21
  
  > export _JAVA_OPTIONS='-ea -Xms1G -Xmx5G --enable-preview'
  
